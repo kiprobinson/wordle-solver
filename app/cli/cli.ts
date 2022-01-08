@@ -26,7 +26,7 @@ const runCli = async() => {
     const selection = await CliUtils.menuPrompt(menuOptions.map(o => o.name));
     await menuOptions[selection].handler();
     
-    console.log()
+    console.log();
     done = !(await CliUtils.askForBoolean('Do you want to do anything else?'));
   }
   
