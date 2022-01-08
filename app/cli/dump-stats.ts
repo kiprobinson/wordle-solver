@@ -4,7 +4,7 @@ import { getWordListStats } from "../lib/word-list";
 const printSortedTable = (frequencyTable:FrequencyTable) => {
   const sortedTable = frequencyTable.getSortedFrequencyTable();
   for(const entry of sortedTable)
-    console.log(`${entry.letter}: ${(100 * entry.percent).toFixed(3).padStart(7)} %`);
+    console.log(`${entry.letter}: ${entry.percent.toFixed(3).padStart(7)} %`);
 }
 
 const dumpStats = async ():Promise<void> => {

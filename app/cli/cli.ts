@@ -1,31 +1,41 @@
-import * as process from 'process';
-import * as readline from 'readline';
 import CliUtils from '../lib/cli-utils';
 import dumpStats from "./dump-stats";
+import dumpWordRatings from './dump-word-ratings';
 
 const menuOptions:Array<{name:string, handler:Function}> = [
   {
-    name: 'Dump wordlist stats.',
+    name: 'Show the best and worst words to start with.',
+    handler: dumpWordRatings,
+  },
+  {
+    name: 'Show character frequencies in the word list.',
     handler: dumpStats,
-  }
+  },
 ];
 
 /**
  * Run the command line interface to this app.
  */
 const runCli = async() => {
-  const rl = readline.createInterface(process.stdin, process.stdout);
+  console.log('-------------------------------------');
   console.log(' *- Welcome to the Wordle Solver! -* ');
   console.log('-------------------------------------');
-  console.log('');
   
-  const cliPrompts = new CliUtils(rl);
-  const selection = await cliPrompts.menuPrompt(menuOptions.map(o => o.name));
+  let done = false;
+  while(!done) {
+    const selection = await CliUtils.menuPrompt(menuOptions.map(o => o.name));
+    await menuOptions[selection].handler();
+    
+    console.log()
+    done = !(await CliUtils.askForBoolean('Do you want to do anything else?'));
+  }
   
-  await menuOptions[selection].handler();
+  console.log();
+  console.log('-------------------------------------');
+  console.log('       *- Have a great day! -*       ');
+  console.log('-------------------------------------');
   
-  rl.close();
+  CliUtils.close();
 }
-
 
 export default runCli;

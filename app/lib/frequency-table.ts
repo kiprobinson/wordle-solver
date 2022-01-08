@@ -62,7 +62,7 @@ export class FrequencyTable {
   private updatePercentages():void {
     if(this.percentagesAccurate)
       return;
-    ALL_LETTERS.forEach(c => this.entries[c].percent = this.entries[c].count / this.count);
+    ALL_LETTERS.forEach(c => this.entries[c].percent = 100 * this.entries[c].count / this.count);
     this.percentagesAccurate = true;
   }
   
