@@ -109,6 +109,7 @@ const processResponse = (guess: string, result: string, guessCount: number, crit
     else if(resultColor === 'b') {
       // black/gray - this letter is not in the word at all
       criteria.invalidLetters.add(guessLetter);
+      criteria.invalidLettersByPosition[i].add(guessLetter);
     }
     else {
       throw new Error(`Invalid color: ${resultColor}`)
@@ -125,6 +126,34 @@ const processResponse = (guess: string, result: string, guessCount: number, crit
         criteria.requiredLetters.push(guessLetter);
       }
     }
+  }
+  
+  // -----------------------------------------------------------------------------------------------
+  // TODO: below logic is not "smart" enough to know if we now know exactly how many of a letter
+  // must appear. For example, if word is "myths" and we guessed "truss" (ybbbg), we would know
+  // from one S being black that there is exactly one S in the solution. However, currently the
+  // top next suggestion is "sates". I will need a separate property in criteria to track this.
+  // ---
+  // Another example of this to test: word is "myths", i guess "tessa" (ybybb), the first guess
+  // is "sorts" even though we should know that there's only one "s"
+  // ---
+  // incomplete idea: when looping above, have arrays "black letters" and "not black letters".
+  // afterward, take union of them. if that union has anything, the count of each letter in
+  // not black letters array is the exact number of that. add a criteria property like
+  // knownLetterCounts: { s: 2 }. when rating word, get letter counts of the word and see if
+  // they match.
+  // -----------------------------------------------------------------------------------------------
+  
+  // in the case where we guessed a word that has two instances of a letter, but only one is correct,
+  // we will have the letter in invalidLetters but also in correctLetters or requiredLetters, which
+  // results in an impossible solution. So we have to remove that letter from invalidLetters
+  for(const letter of criteria.correctLetters) {
+    if(letter)
+      criteria.invalidLetters.delete(letter);
+  }
+  for(const letter of criteria.requiredLetters) {
+    if(letter)
+      criteria.invalidLetters.delete(letter);
   }
   
   return {success: false};
