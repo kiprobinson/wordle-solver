@@ -1,6 +1,23 @@
 import * as process from 'process';
 import * as readline from 'readline';
 
+type AskOptions = {
+  /** Prompt to give the user when asking question. */
+  question: string;
+  
+  /** Apply formatting to the answer before validating (i.e. toLowerCase). */
+  formatter?: {(answer:string):string};
+  
+  /** Validation regex to determine if the user's input is valid. */
+  regex?: RegExp;
+  
+  /** Validation callback to determine if the user's input is valid. */
+  validator?: {(answer:string):boolean};
+  
+  /** Message that will be shown to user if they enter an invalid option. */
+  retryMessage?: string;
+}
+
 /**
  * A few utilities for command line interfaces.
  */
@@ -13,13 +30,50 @@ class CliUtils {
   }
   
   /**
-   * Async version of readline.question()
+   * Async version of `readline.question()`.
    */
-  static ask(question: string):Promise<string> {
+  private static askImpl(question: string):Promise<string> {
     this.lazyInit();
-    return new Promise(resolve => {
-      this.rl.question(question, answer => resolve(answer.trim()));
+    return new Promise((resolve, reject) => {
+      try {
+        this.rl.question(question.trimEnd() + ' ', answer => resolve(answer.trim()));
+      }
+      catch (err) {
+        reject(err);
+      }
     })
+  }
+  
+  /**
+   * Asks the user a question on the command line, and awaits their answer.
+   * If validation is specified, and the user inputs an invalid answer,
+   * they are asked to try again until they enter a valid response.
+   */
+  static async ask(options:AskOptions):Promise<string> {
+    while(true) {
+      let answer = await this.askImpl(options.question);
+      let answerValid = true;
+      
+      if(options.formatter)
+        answer = options.formatter(answer);
+      
+      if(answerValid && options.regex) {
+        if(!options.regex.test(answer))
+          answerValid = false;
+      }
+      
+      if(answerValid && options.validator) {
+        if(!options.validator(answer))
+          answerValid = false;
+      }
+      
+      if(answerValid)
+        return answer;
+      
+      // if we get here, user entered something that wasn't a valid
+      console.log();
+      console.log(options.retryMessage || `Sorry, that's not a valid option. Try again!`);
+    }
   }
   
   /**
@@ -27,17 +81,14 @@ class CliUtils {
    * user is prompted to try again.
    */
   static async askForBoolean(question: string): Promise<boolean> {
-    while(true) {
-      const answer = (await this.ask(question + ' (y/n) ')).toLowerCase();
-      if(answer === 'y' || answer === 'yes')
-        return true;
-      else if(answer === 'n' || answer === 'no')
-        return false;
-      
-      // if we get here, user entered something that wasn't a valid y/n
-      console.log();
-      console.log(`Sorry, that's not a valid option. Try again!`);
+    const askOptions:AskOptions = {
+      question: question + ' (y/n)',
+      formatter: (answer:string):string => answer.toLowerCase(),
+      regex: /^(?:y|yes|n|no)$/i,
     }
+    
+    const answer = await this.ask(askOptions);
+    return (answer === 'y' || answer === 'yes');
   }
   
   /**
@@ -46,19 +97,15 @@ class CliUtils {
    */
   static async askForInteger(question: string, min:number=Number.MIN_SAFE_INTEGER, max:number=Number.MAX_SAFE_INTEGER):Promise<number> {
     const help = (min !== Number.MIN_SAFE_INTEGER && max !== Number.MAX_SAFE_INTEGER) ? ` (${min}-${max})` : '';
-    // we loop until user has entered a valid option
-    while(true) {
-      const answer = await this.ask(question + help + ' ');
-      if(/^-?\d+$/.test(answer)) {
+    const askOptions:AskOptions = {
+      question: question + help,
+      regex: /^-?\d+$/,
+      validator: (answer:string):boolean => {
         const n = Number(answer);
-        if(min <= n && n <= max)
-          return n;
+        return Number.isInteger(n) && min <= n && n <= max;
       }
-      
-      // if we get here, user entered something that wasn't a valid integer
-      console.log();
-      console.log(`Sorry, that's not a valid option. Try again!`);
-    }
+    };
+    return Number(await this.ask(askOptions));
   }
 
   /**
