@@ -22,21 +22,21 @@ type AskOptions = {
  * A few utilities for command line interfaces.
  */
 class CliUtils {
-  private static rl:readline.Interface = null;
+  private static rl:readline.Interface|null = null;
   
-  private static lazyInit() {
+  private static getRl():readline.Interface {
     if(!this.rl)
       this.rl = readline.createInterface(process.stdin, process.stdout);
+    return this.rl;
   }
   
   /**
    * Async version of `readline.question()`.
    */
   private static askImpl(question: string):Promise<string> {
-    this.lazyInit();
     return new Promise((resolve, reject) => {
       try {
-        this.rl.question(question.trimEnd() + ' ', answer => resolve(answer.trim()));
+        this.getRl().question(question.trimEnd() + ' ', answer => resolve(answer.trim()));
       }
       catch (err) {
         reject(err);

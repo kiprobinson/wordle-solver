@@ -22,7 +22,7 @@ export type RateWordCriteria = {
   invalidLettersByPosition?: Array<Set<string>>;
   
   /** The letters which we know are correct. */
-  correctLetters?: string[];
+  correctLetters?: Array<string|null>;
   
   /** 
    * Letters which we know have to be in the answer, but we don't know where.

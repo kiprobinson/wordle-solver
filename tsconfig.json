@@ -1,10 +1,12 @@
 {
   "compilerOptions": {
+    "strict": true,
     "module": "commonjs",
     "esModuleInterop": true,
     "target": "es6",
     "moduleResolution": "node",
     "sourceMap": true,
+    "noFallthroughCasesInSwitch": true,
     "outDir": "dist"
   },
   "lib": ["es2015"]

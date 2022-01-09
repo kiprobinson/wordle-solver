@@ -1,10 +1,15 @@
 import CliUtils from '../lib/cli-utils';
 import dumpStats from "./dump-stats";
 import dumpWordRatings from './dump-word-ratings';
+import { cheatAtWordle } from './wordle-cheater';
 
 const menuOptions:Array<{name:string, handler:Function}> = [
   {
-    name: 'Show the best and worst words to start with.',
+    name: 'Cheat at Wordle ;)',
+    handler: cheatAtWordle,
+  },
+  {
+    name: 'Show the best words to start with.',
     handler: dumpWordRatings,
   },
   {
