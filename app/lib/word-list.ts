@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { FrequencyTable } from './frequency-table';
-import { arrayRemoveValue } from './util';
+import { arrayCount, arrayRemoveValue } from './util';
 
 export type WordListStats = {
   overallFrequencies: FrequencyTable;
@@ -31,6 +31,18 @@ export type RateWordCriteria = {
    * to be in the answer.
    */
   requiredLetters?: string[];
+  
+  /**
+   * Stores any letters for which we know exactly how many of that letter is
+   * in the solution.
+   * 
+   * Example where this is needed:
+   * 
+   * - If word is "myths" and we guess "truss" (ybbbg) or "tessa" (ybybb),
+   *   we would know from one S being black that there is exactly one S
+   *   in the solution.
+   */
+  knownLetterCounts?: Record<string, number>;
 }
 
 const VALID_WORD_REGEX = /^[a-z]{5}$/;
@@ -108,6 +120,15 @@ export const rateWord = (word:string, stats:WordListStats, criteria:RateWordCrit
   // if we didn't have all required letters, this can't be a match.
   if(requiredLetters.length)
     return 0;
+  
+  // check for character counts if any are known
+  if(criteria.knownLetterCounts) {
+    for(const letter of Object.keys(criteria.knownLetterCounts)) {
+      if(arrayCount([...word], letter) !== criteria.knownLetterCounts[letter]) {
+        return 0;
+      }
+    }
+  }
   
   return score;
 }

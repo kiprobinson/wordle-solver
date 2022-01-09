@@ -10,3 +10,45 @@ export const arrayRemoveValue = <T>(arr:T[], value:T):T[] => {
     arr.splice(index, 1);
   return arr;
 }
+
+/**
+ * Returns the union of two arrays.
+ */
+export const arrayUnion = <T>(a:T[], b:T[]):T[] => {
+  const set = new Set<T>([...a, ...b]);
+  return [...set];
+}
+
+/**
+ * Returns the intersection of two arrays.
+ */
+export const arrayIntersection = <T>(a:T[], b:T[]):T[] => {
+  const aSet = new Set<T>([...a]);
+  const res = new Set<T>();
+  for(let el of b) {
+    if(aSet.has(el)) {
+      res.add(el);
+    }
+  }
+  return [...res];
+}
+
+/**
+ * Counts the number of times a given value appears in an array.
+ */
+export const arrayCount = <T>(arr:T[], val:T):number => {
+  let count = 0;
+  for(let el of arr) {
+    if(el === val) {
+      count++;
+    }
+  }
+  return count;
+}
+
+/**
+ * Version of JSON.stringify but it renders sets as arrays.
+ */
+export const JsonStringifySets = (o:any, space?:number|string):string => {
+  return JSON.stringify(o, (k, v) => v instanceof Set ? [...v] : v, space);
+}

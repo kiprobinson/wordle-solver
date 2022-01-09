@@ -1,5 +1,5 @@
 import CliUtils from "../lib/cli-utils";
-import { arrayRemoveValue } from "../lib/util";
+import { arrayCount, arrayRemoveValue, arrayIntersection, JsonStringifySets } from "../lib/util";
 import { getWordListStats, getSortedWordList, RateWordCriteria, WordListStats } from "../lib/word-list";
 
 
@@ -17,6 +17,7 @@ export const cheatAtWordle = async ():Promise<void> => {
       new Set<string>(),
       new Set<string>(),
     ],
+    knownLetterCounts: {},
   }
   
   let guessCount = 0;
@@ -95,6 +96,9 @@ const processResponse = (guess: string, result: string, guessCount: number, crit
   // Now, say we guess "sassy". We need to make sure that we don't end up with three Ss in required letters
   const requiredLettersCopy = [...criteria.requiredLetters];
   
+  const blackLetters:string[] = [];
+  const nonBlackLetters:string[] = [];
+  
   for(let i = 0; i < 5; i++) {
     const guessLetter = guess[i];
     const resultColor = result[i];
@@ -116,6 +120,7 @@ const processResponse = (guess: string, result: string, guessCount: number, crit
     }
     
     if(resultColor === 'g' || resultColor === 'y') {
+      nonBlackLetters.push(guessLetter);
       if(requiredLettersCopy.includes(guessLetter)) {
         // this letter was already in criteria.required letters. Remove it from the copy, so that if
         // there is another yellow/green of this letter, it doesn't get skipped.
@@ -126,23 +131,10 @@ const processResponse = (guess: string, result: string, guessCount: number, crit
         criteria.requiredLetters.push(guessLetter);
       }
     }
+    else {
+      blackLetters.push(guessLetter);
+    }
   }
-  
-  // -----------------------------------------------------------------------------------------------
-  // TODO: below logic is not "smart" enough to know if we now know exactly how many of a letter
-  // must appear. For example, if word is "myths" and we guessed "truss" (ybbbg), we would know
-  // from one S being black that there is exactly one S in the solution. However, currently the
-  // top next suggestion is "sates". I will need a separate property in criteria to track this.
-  // ---
-  // Another example of this to test: word is "myths", i guess "tessa" (ybybb), the first guess
-  // is "sorts" even though we should know that there's only one "s"
-  // ---
-  // incomplete idea: when looping above, have arrays "black letters" and "not black letters".
-  // afterward, take union of them. if that union has anything, the count of each letter in
-  // not black letters array is the exact number of that. add a criteria property like
-  // knownLetterCounts: { s: 2 }. when rating word, get letter counts of the word and see if
-  // they match.
-  // -----------------------------------------------------------------------------------------------
   
   // in the case where we guessed a word that has two instances of a letter, but only one is correct,
   // we will have the letter in invalidLetters but also in correctLetters or requiredLetters, which
@@ -155,6 +147,22 @@ const processResponse = (guess: string, result: string, guessCount: number, crit
     if(letter)
       criteria.invalidLetters.delete(letter);
   }
+  
+  // If word is "myths" and we guess "truss" (ybbbg) or "tessa" (ybybb),
+  // we would know from one S being black and one S being non-black that
+  // there is exactly one S in the solution. So for any letter that appears
+  // in both black and nonblack colors, the exact number of that letter in
+  // the correct answer is the number of times that letter appears as
+  // non-black.
+  const multicolorLetters:string[] = arrayIntersection(blackLetters, nonBlackLetters);
+  for(const letter of multicolorLetters) {
+    criteria.knownLetterCounts[letter] = arrayCount(nonBlackLetters, letter);
+  }
+  
+  //console.log();
+  //console.log('current criteria:')
+  //console.log(JsonStringifySets(criteria));
+  //console.log();
   
   return {success: false};
 }
