@@ -63,6 +63,8 @@ const playTurn = async ():Promise<{guess:string, result:string}> => {
     question: 'What word did you try?',
     formatter: (s:string):string => s.toLowerCase(),
     regex: /^[a-z]{5}$/i,
+    //if answer is all [bgy], user entered the result instead of the guess, so don't allow that either
+    validator: (s:string):boolean => !/^[bgy]+$/.test(s),
     retryMessage: "Sorry that doesn't look like a five letter word. Try again!",
   });
   
