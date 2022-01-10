@@ -79,9 +79,4 @@ export const updateCriteriaPerResult = (guess: string, result: string, criteria:
   for(const letter of multicolorLetters) {
     criteria.knownLetterCounts[letter] = arrayCount(nonBlackLetters, letter);
   }
-  
-  //console.log();
-  //console.log('current criteria:')
-  //console.log(JsonStringifySets(criteria));
-  //console.log();
 }

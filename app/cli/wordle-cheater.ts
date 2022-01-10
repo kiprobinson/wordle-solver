@@ -1,24 +1,12 @@
 import CliUtils from "../lib/cli-utils";
-import { getWordListStats, getSortedWordList, RateWordCriteria, WordListStats } from "../lib/word-list";
+import { getWordListStats, getSortedWordList, RateWordCriteria, WordListStats, getEmptyRateWordCriteria } from "../lib/word-list";
 import { updateCriteriaPerResult } from "../lib/wordle-engine";
 
 
 
 export const cheatAtWordle = async ():Promise<void> => {
   const stats = getWordListStats();
-  const criteria: Required<RateWordCriteria> = {
-    correctLetters: [null, null, null, null, null],
-    requiredLetters: [],
-    invalidLetters: new Set<string>(),
-    invalidLettersByPosition: [
-      new Set<string>(),
-      new Set<string>(),
-      new Set<string>(),
-      new Set<string>(),
-      new Set<string>(),
-    ],
-    knownLetterCounts: {},
-  }
+  const criteria: Required<RateWordCriteria> = getEmptyRateWordCriteria();
   
   let guessCount = 0;
   while(true) {

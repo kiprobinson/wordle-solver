@@ -45,19 +45,28 @@ export type RateWordCriteria = {
   knownLetterCounts?: Record<string, number>;
 }
 
+export const getEmptyRateWordCriteria = ():Required<RateWordCriteria> => ({
+  invalidLetters: new Set(),
+  invalidLettersByPosition: [new Set(), new Set(), new Set(), new Set(), new Set()],
+  correctLetters: [null, null, null, null, null],
+  requiredLetters: [],
+  knownLetterCounts: {},
+});
+
 const VALID_WORD_REGEX = /^[a-z]{5}$/;
 
 /**
- * The list of all five-letter English words.
+ * The list of all five-letter English words. We can pass a different list to the functions
+ * for unit testing.
  */
-export const wordList:string[] = fs.readFileSync('app/resources/word-list.txt').toString()
+export const DEFAULT_WORD_LIST:string[] = fs.readFileSync('app/resources/word-list.txt').toString()
   .split(/\s+/)
   .filter(s => VALID_WORD_REGEX.test(s));
 
 /**
  * Parse the word list to calculate frequencies of each character overall and per-character.
  */
-export const getWordListStats = ():WordListStats => {
+export const getWordListStats = (wordList:string[]=DEFAULT_WORD_LIST):WordListStats => {
   const stats:WordListStats = {
     overallFrequencies: new FrequencyTable(),
     characterFrequencies: [
@@ -136,7 +145,7 @@ export const rateWord = (word:string, stats:WordListStats, criteria:RateWordCrit
 /**
  * Gets a sorted word list, evaluating the score for each word.
  */
-export const getSortedWordList = (stats:WordListStats, criteria:RateWordCriteria={}):SortedWordList => {
+export const getSortedWordList = (stats:WordListStats, criteria:RateWordCriteria={}, wordList:string[]=DEFAULT_WORD_LIST):SortedWordList => {
   const list:SortedWordList = wordList.map(word => ({
     word,
     score: rateWord(word, stats, criteria),
