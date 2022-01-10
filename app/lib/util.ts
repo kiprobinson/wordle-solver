@@ -23,10 +23,10 @@ export const arrayUnion = <T>(a:T[], b:T[]):T[] => {
  * Returns the intersection of two arrays.
  */
 export const arrayIntersection = <T>(a:T[], b:T[]):T[] => {
-  const aSet = new Set<T>([...a]);
+  const bSet = new Set<T>([...b]);
   const res = new Set<T>();
-  for(let el of b) {
-    if(aSet.has(el)) {
+  for(let el of a) {
+    if(bSet.has(el)) {
       res.add(el);
     }
   }
