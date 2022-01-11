@@ -52,3 +52,8 @@ export const arrayCount = <T>(arr:T[], val:T):number => {
 export const JsonStringifySets = (o:any, space?:number|string):string => {
   return JSON.stringify(o, (k, v) => v instanceof Set ? [...v] : v, space);
 }
+
+/**
+ * Promise version of setImmediate().
+ */
+export const setImmediateAsync = async ():Promise<void> => await new Promise(resolve => setImmediate(resolve));
