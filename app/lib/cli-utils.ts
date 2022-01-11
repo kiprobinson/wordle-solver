@@ -18,12 +18,17 @@ type AskOptions = {
   retryMessage?: string;
 }
 
+type CliColor = 'black'|'red'|'yellow'|'green'|'cyan'|'blue'|'magenta'|'white';
+
 /**
  * A few utilities for command line interfaces.
  */
 class CliUtils {
   private static rl:readline.Interface|null = null;
   
+  /**
+   * Lazy-loads the readline interface.
+   */
   private static getRl():readline.Interface {
     if(!this.rl)
       this.rl = readline.createInterface(process.stdin, process.stdout);
@@ -136,6 +141,45 @@ class CliUtils {
       this.rl.close();
       this.rl = null;
     }
+  }
+  
+  /**
+   * Returns a string with the escape sequences to change the color of the text in the terminal.
+   */
+  static cliColorString(message:string, colors:{foreground?:CliColor, background?:CliColor}):string {
+    const reset = "\x1b[0m";
+    
+    const fg:Record<CliColor, string> = {
+      black: "\x1b[30m",
+      red: "\x1b[31m",
+      green: "\x1b[32m",
+      yellow: "\x1b[33m",
+      blue: "\x1b[34m",
+      magenta: "\x1b[35m",
+      cyan: "\x1b[36m",
+      white: "\x1b[37m",
+    };
+    
+    const bg:Record<CliColor, string> = {
+      black: "\x1b[40m",
+      red: "\x1b[41m",
+      green: "\x1b[42m",
+      yellow: "\x1b[43m",
+      blue: "\x1b[44m",
+      magenta: "\x1b[45m",
+      cyan: "\x1b[46m",
+      white: "\x1b[47m",
+    };
+    
+    let formatted = '';
+    if (colors.foreground)
+      formatted += fg[colors.foreground];
+    if (colors.background)
+      formatted += bg[colors.background];
+    formatted += message;
+    formatted += reset;
+    
+    return formatted;
   }
 }
 

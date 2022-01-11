@@ -1,9 +1,49 @@
 import { expect } from "chai";
 import { getEmptyRateWordCriteria } from "../../app/lib/word-list";
-import { updateCriteriaPerResult } from "../../app/lib/wordle-engine";
+import { getResultForGuess, updateCriteriaPerResult } from "../../app/lib/wordle-engine";
 
 
 describe('test wordle-engine.ts methods', () => {
+  it('getResultForGuess - guess is "stint", correct answer is "weary"', () => {
+    expect(getResultForGuess('stint', 'weary')).to.equal('bbbbb');
+  });
+  
+  it('getResultForGuess - guess is "stint", correct answer is "tints"', () => {
+    expect(getResultForGuess('stint', 'tints')).to.equal('yyyyy');
+  });
+  
+  it('getResultForGuess - guess is "stint", correct answer is "stint"', () => {
+    expect(getResultForGuess('stint', 'stint')).to.equal('ggggg');
+  });
+  
+  it('getResultForGuess - guess is "stint", correct answer is "tasty"', () => {
+    expect(getResultForGuess('stint', 'tasty')).to.equal('yybby');
+  });
+  
+  it('getResultForGuess - guess is "stint", correct answer is "trips"', () => {
+    expect(getResultForGuess('stint', 'trips')).to.equal('yygbb');
+  });
+  
+  it('getResultForGuess - guess is "stint", correct answer is "trust"', () => {
+    expect(getResultForGuess('stint', 'trust')).to.equal('yybbg');
+  });
+  
+  it('getResultForGuess - guess is "stint", correct answer is "plant"', () => {
+    expect(getResultForGuess('stint', 'plant')).to.equal('bbbgg');
+  });
+  
+  it('getResultForGuess - guess is "stint", correct answer is "stops"', () => {
+    expect(getResultForGuess('stint', 'stops')).to.equal('ggbbb');
+  });
+  
+  it('getResultForGuess - guess is "sassy", correct answer is "truss"', () => {
+    expect(getResultForGuess('sassy', 'truss')).to.equal('ybbgb');
+  });
+  
+  it('getResultForGuess - guess is "sassy", correct answer is "plant"', () => {
+    expect(getResultForGuess('sassy', 'plant')).to.equal('bybbb');
+  });
+  
   it('updateCriteriaPerResult - word is "truss" and we guess "tares" then "tours"', () => {
     let criteria = getEmptyRateWordCriteria();
     updateCriteriaPerResult('tares', 'gbybg', criteria);

@@ -1,6 +1,58 @@
+import CliUtils from "./cli-utils";
 import { arrayRemoveValue, arrayIntersection, arrayCount } from "./util";
 import { RateWordCriteria } from "./word-list";
 
+
+/**
+ * Given a guess and the correct answer, returns the result- a string consisting
+ * of the letters B=black/gray, Y=yellow, G=green.
+ */
+export const getResultForGuess = (guess: string, correctAnswer: string):string => {
+  // we can't simply loop through and assign colors - we need to assign the greens,
+  // then the yellows, and what is left is black
+  
+  const answerLetters = [...correctAnswer];
+  const resultLetters = ['b', 'b', 'b', 'b', 'b'];
+  
+  // look for matches. If we find any, remove them from the correctAnswers array.
+  for(let i = 0; i < 5; i++) {
+    if(guess[i] === correctAnswer[i]) {
+      resultLetters[i] = 'g';
+      arrayRemoveValue(answerLetters, guess[i]);
+    }
+  }
+  
+  // now answerLetters array only has the letters that were not perfect matches.
+  // any letter that was not correct, but is still in the answer (after the
+  // perfect matches were removed) must be yellow.
+  for(let i = 0; i < 5; i++) {
+    if(guess[i] !== correctAnswer[i] && answerLetters.indexOf(guess[i]) >= 0) {
+      resultLetters[i] = 'y';
+      arrayRemoveValue(answerLetters, guess[i]);
+    }
+  }
+  
+  return resultLetters.join('');
+}
+
+/**
+ * Formats the guess for display in the console, using console color escape sequences.
+ */
+export const formatGuessPerResult = (guess: string, result: string):string => {
+  let formatted = '';
+  for(let i = 0; i < 5; i++) {
+    if(result[i] === 'g')
+      formatted += CliUtils.cliColorString(guess[i].toUpperCase(), {background: 'green', foreground: 'black'});
+    else if(result[i] === 'y')
+      formatted += CliUtils.cliColorString(guess[i].toUpperCase(), {background: 'yellow', foreground: 'black'});
+    else
+      formatted += CliUtils.cliColorString(guess[i].toUpperCase(), {background: 'black', foreground: 'red'});
+    
+    formatted += ' ';
+  }
+  
+  return formatted;
+}
 
 /**
  * After user makes a guess and Wordle responds, updates the criteria object with any new info. This will
