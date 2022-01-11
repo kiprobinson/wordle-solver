@@ -1,7 +1,7 @@
 import CliUtils from '../lib/cli-utils';
 import dumpStats from "./dump-stats";
 import dumpWordRatings from './dump-word-ratings';
-import { cheatAtWordle } from './wordle-cheater';
+import cheatAtWordle from './wordle-cheater';
 
 const menuOptions:Array<{name:string, handler:Function}> = [
   {

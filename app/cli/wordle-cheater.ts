@@ -2,9 +2,10 @@ import CliUtils from "../lib/cli-utils";
 import { getWordListStats, getSortedWordList, RateWordCriteria, WordListStats, getEmptyRateWordCriteria } from "../lib/word-list";
 import { updateCriteriaPerResult } from "../lib/wordle-engine";
 
-
-
-export const cheatAtWordle = async ():Promise<void> => {
+/**
+ * Text-based adventure to solve a Wordle problem.
+ */
+const cheatAtWordle = async ():Promise<void> => {
   const stats = getWordListStats();
   const criteria: Required<RateWordCriteria> = getEmptyRateWordCriteria();
   
@@ -84,3 +85,5 @@ const processResponse = (guess: string, result: string, guessCount: number, crit
   
   return {success: false};
 }
+
+export default cheatAtWordle;
