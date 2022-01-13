@@ -62,8 +62,8 @@ const evaluateSolver = async () => {
   const meanGuesses:number = results.reduce((acc:number, entry:WordResult):number => acc + entry.guesses, 0) / results.length;
   
   console.log();
-  console.log(`Median number of guesses: ${medianGuesses.toFixed(3)}`);
-  console.log(`Mean number of guesses:   ${meanGuesses.toFixed(3)}`);
+  console.log(`Median number of guesses: ${medianGuesses.toFixed(6)}`);
+  console.log(`Mean number of guesses:   ${meanGuesses.toFixed(6)}`);
 };
 
 export default evaluateSolver;

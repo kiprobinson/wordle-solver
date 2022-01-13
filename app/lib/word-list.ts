@@ -113,10 +113,15 @@ export const rateWord = (word:string, stats:WordListStats, criteria:RateWordCrit
     if(criteria?.correctLetters?.[i] && criteria.correctLetters[i] !== letter)
       return 0;
     
-    arrayRemoveValue(requiredLetters, letter);
+    const wasRequiredLetter = arrayRemoveValue(requiredLetters, letter);
     
-    // award points based on how likely this letter is to be the right answer at this position
-    score += stats.characterFrequencies[i].getLetterPercent(letter);
+    // award points based on how likely this letter is to be the right answer at this position.
+    // But if this wasn't a required letter, multiply the position-specific points by 1/1000,
+    // so that the algorithm heavily favors the most common letters overall. For the case where
+    // we have no required letters (i.e. first guess), the character-specific points really only
+    // come into play when breaking ties. But if we have a word with a required letter, we want
+    // to favor a guess that has that letter in the most likely position.
+    score += stats.characterFrequencies[i].getLetterPercent(letter) * (wasRequiredLetter ? 1 : 0.001);
     
     // award points based on how likely this letter is to be in the solution at any location,
     // but only if we haven't already seen this word.

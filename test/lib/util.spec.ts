@@ -4,30 +4,51 @@ import { arrayCount, arrayIntersection, arrayRemoveValue, arrayUnion, JsonString
 
 describe('test util.ts methods', () => {
   it('arrayRemoveValue', () => {
-    expect(arrayRemoveValue(['a', 'b', 'c'], 'a')).to.deep.equal(['b', 'c']);
-    expect(arrayRemoveValue(['a', 'b', 'c'], 'b')).to.deep.equal(['a', 'c']);
-    expect(arrayRemoveValue(['a', 'b', 'c'], 'x')).to.deep.equal(['a', 'b', 'c']);
-    expect(arrayRemoveValue(['a', 'a', 'a'], 'a')).to.deep.equal(['a', 'a']);
-    expect(arrayRemoveValue(['a', 'b', 'a'], 'a')).to.deep.equal(['b', 'a']);
-    expect(arrayRemoveValue(['a'], 'a')).to.deep.equal([]);
-    expect(arrayRemoveValue([], 'a')).to.deep.equal([]);
+    let arr:any[];
     
+    arr = ['a', 'b', 'c']
+    expect(arrayRemoveValue(arr, 'a')).to.be.true;
+    expect(arr).to.deep.equal(['b', 'c']);
     
-    expect(arrayRemoveValue(['1', '2', '3'], '1')).to.deep.equal(['2', '3']);
-    expect(arrayRemoveValue(<any[]>['1', '2', '3'], 1)).to.deep.equal(['1', '2', '3']);
-    expect(arrayRemoveValue(<any[]>[1, 2, 3], '1')).to.deep.equal([1, 2, 3]);
+    arr = ['a', 'b', 'c']
+    expect(arrayRemoveValue(arr, 'b')).to.be.true;
+    expect(arr).to.deep.equal(['a', 'c']);
+    
+    arr = ['a', 'b', 'c']
+    expect(arrayRemoveValue(arr, 'x')).to.be.false;
+    expect(arr).to.deep.equal(['a', 'b', 'c']);
+    
+    arr = ['a', 'a', 'a']
+    expect(arrayRemoveValue(arr, 'a')).to.be.true;
+    expect(arr).to.deep.equal(['a', 'a']);
+    
+    arr = ['a', 'b', 'a']
+    expect(arrayRemoveValue(arr, 'a')).to.be.true;
+    expect(arr).to.deep.equal(['b', 'a']);
+    
+    arr = ['a']
+    expect(arrayRemoveValue(arr, 'a')).to.be.true;
+    expect(arr).to.deep.equal([]);
+    
+    arr = []
+    expect(arrayRemoveValue(arr, 'a')).to.be.false;
+    expect(arr).to.deep.equal([]);
   });
   
-  it('arrayRemoveValue modifies array in place and also returns a reference to the same array', () => {
-    let arrIn = ['a', 'b', 'c'];
-    let arrOut = arrayRemoveValue(arrIn, 'a');
+  it('arrayRemoveValue - ensure triple equals comparison', () => {
+    let arr:any[];
     
-    //original array should be modified also
-    expect(arrOut).to.deep.equal(['b', 'c']);
-    expect(arrIn).to.deep.equal(['b', 'c']);
+    arr = ['1', '2', '3']
+    expect(arrayRemoveValue(arr, '1')).to.be.true;
+    expect(arr).to.deep.equal(['2', '3']);
     
-    //ensure that both arrays are actually the same reference
-    expect(arrIn).to.equal(arrOut);
+    arr = ['1', '2', '3']
+    expect(arrayRemoveValue(arr, 1)).to.be.false;
+    expect(arr).to.deep.equal(['1', '2', '3']);
+    
+    arr = [1, 2, 3]
+    expect(arrayRemoveValue(arr, '1')).to.be.false;
+    expect(arr).to.deep.equal([1, 2, 3]);
   });
   
   it('arrayUnion', () => {
