@@ -10,13 +10,14 @@ const evaluateSolver = async () => {
   if(!(await CliUtils.askForBoolean('This will take a few minutes. Continue?')))
     return;
   
-  const stats = getWordListStats();
-  
   const results:WordResult[] = [];
   
   console.log('0% ...');
   let nextAlertPercent = 5;
   for(const word of DEFAULT_WORD_LIST) {
+    let wordList = [...DEFAULT_WORD_LIST];
+    let stats = getWordListStats(wordList);
+    
     const criteria: Required<RateWordCriteria> = getEmptyRateWordCriteria();
     
     let lastGuess = null;
@@ -38,6 +39,8 @@ const evaluateSolver = async () => {
         break;
       
       updateCriteriaPerResult(guess, result, criteria);
+      wordList = sortedWordList.filter(e => e.score > 0).map(e => e.word);
+      stats = getWordListStats(wordList);
     }
     
     results.push({word, guesses});

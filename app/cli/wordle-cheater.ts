@@ -1,5 +1,5 @@
 import CliUtils from "../lib/cli-utils";
-import { getWordListStats, getSortedWordList, RateWordCriteria, WordListStats, getEmptyRateWordCriteria } from "../lib/word-list";
+import { getWordListStats, getSortedWordList, RateWordCriteria, WordListStats, getEmptyRateWordCriteria, DEFAULT_WORD_LIST } from "../lib/word-list";
 import { formatGuessPerResult, getResultForGuess, updateCriteriaPerResult } from "../lib/wordle-engine";
 
 type GuessHistory = Array<{guess:string, result:string}>;
@@ -8,16 +8,18 @@ type GuessHistory = Array<{guess:string, result:string}>;
  * Text-based adventure to solve a Wordle problem.
  */
 const cheatAtWordle = async ():Promise<void> => {
-  const stats = getWordListStats();
+  let wordList = DEFAULT_WORD_LIST;
   const criteria: Required<RateWordCriteria> = getEmptyRateWordCriteria();
   
   const correctAnswer = await askForAnswer();
   
   let guesses:GuessHistory = [];
   while(true) {
-    const {abort} = showBestGuesses(stats, criteria);
+    const {abort, newWordList} = showBestGuesses(wordList, criteria);
     if(abort)
       break;
+    
+    wordList = newWordList;
     
     const {guess, result} = await playTurn(correctAnswer);
     guesses.push({guess, result});
@@ -50,12 +52,15 @@ const askForAnswer = async ():Promise<string|null> => {
 /**
  * Show the best guesses at this point in the game.
  */
-const showBestGuesses = (stats:WordListStats, criteria:RateWordCriteria): {abort:boolean} => {
+const showBestGuesses = (wordList:string[], criteria:RateWordCriteria): {abort:boolean, newWordList: string[]} => {
+  const stats = getWordListStats(wordList);
   const sortedWordList = getSortedWordList(stats, criteria);
+  const newWordList = sortedWordList.filter(e => e.score > 0).map(e => e.word);
+  
   if(sortedWordList[0].score <= 0) {
     console.log();
     console.log("I'm sorry, but I couldn't find any words matching this criteria. Wordle must have a larger vocabulary than me!");
-    return {abort: true};
+    return {abort: true, newWordList};
   }
   
   console.log();
@@ -63,7 +68,7 @@ const showBestGuesses = (stats:WordListStats, criteria:RateWordCriteria): {abort
   for(let i = 0; i < 10 && sortedWordList[i].score > 0; i++)
     console.log(`${i+1}: ${sortedWordList[i].word}`);
   
-  return {abort: false};
+  return {abort: false, newWordList};
 }
 
 /**
