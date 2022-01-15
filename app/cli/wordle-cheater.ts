@@ -64,8 +64,8 @@ const showBestGuesses = (wordList:string[], criteria:RateWordCriteria): {abort:b
   }
   
   console.log();
-  console.log('Here are my top ten suggestions for you to try:');
-  for(let i = 0; i < 10 && sortedWordList[i].score > 0; i++)
+  console.log('Here are my top twenty suggestions for you to try:');
+  for(let i = 0; i < 20 && sortedWordList[i].score > 0; i++)
     console.log(`${i+1}: ${sortedWordList[i].word}`);
   
   return {abort: false, newWordList};
