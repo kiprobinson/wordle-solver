@@ -2790,7 +2790,6 @@ inter
 intra
 intro
 inure
-ioctl
 iodic
 ionic
 iotas
