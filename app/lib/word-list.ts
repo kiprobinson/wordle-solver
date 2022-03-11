@@ -96,6 +96,9 @@ export const getWordListStats = (wordList:string[]=DEFAULT_WORD_LIST):WordListSt
  * zero is returned.
  */
 export const rateWord = (word:string, stats:WordListStats, criteria:RateWordCriteria={}):number => {
+  if(!wordMatchesCriteria(word, criteria))
+    return 0;
+  
   let score = 0;
   
   const requiredLetters = criteria.requiredLetters ? [...criteria.requiredLetters] : [];
@@ -103,15 +106,6 @@ export const rateWord = (word:string, stats:WordListStats, criteria:RateWordCrit
   const lettersProcessed = new Set<string>();
   for(let i = 0; i < 5; i++) {
     const letter = word[i];
-    
-    if(criteria?.invalidLetters?.has(letter))
-      return 0;
-    
-    if(criteria?.invalidLettersByPosition?.[i]?.has(letter))
-      return 0;
-    
-    if(criteria?.correctLetters?.[i] && criteria.correctLetters[i] !== letter)
-      return 0;
     
     const wasRequiredLetter = arrayRemoveValue(requiredLetters, letter);
     
@@ -131,20 +125,44 @@ export const rateWord = (word:string, stats:WordListStats, criteria:RateWordCrit
     }
   }
   
+  return score;
+}
+
+/**
+ * Returns whether the given word matches the provided criteria.
+ */
+export const wordMatchesCriteria = (word:string, criteria:RateWordCriteria={}):boolean => {
+  const requiredLetters = criteria.requiredLetters ? [...criteria.requiredLetters] : [];
+  
+  for(let i = 0; i < 5; i++) {
+    const letter = word[i];
+    
+    if(criteria?.invalidLetters?.has(letter))
+      return false;
+    
+    if(criteria?.invalidLettersByPosition?.[i]?.has(letter))
+      return false;
+    
+    if(criteria?.correctLetters?.[i] && criteria.correctLetters[i] !== letter)
+      return false;
+    
+    arrayRemoveValue(requiredLetters, letter);
+  }
+  
   // if we didn't have all required letters, this can't be a match.
   if(requiredLetters.length)
-    return 0;
+    return false;
   
   // check for character counts if any are known
   if(criteria.knownLetterCounts) {
     for(const letter of Object.keys(criteria.knownLetterCounts)) {
       if(arrayCount([...word], letter) !== criteria.knownLetterCounts[letter]) {
-        return 0;
+        return false;
       }
     }
   }
   
-  return score;
+  return true;
 }
 
 /**

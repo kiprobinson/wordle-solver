@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { getWordListStats, rateWord } from "../../app/lib/word-list";
+import { getWordListStats, wordMatchesCriteria, rateWord } from "../../app/lib/word-list";
 
 
 describe('test word-list.ts methods', () => {
@@ -127,5 +127,46 @@ describe('test word-list.ts methods', () => {
     expect(rateWord('sassy', stats, {knownLetterCounts: {s:1}})).to.equal(0);
     expect(rateWord('sassy', stats, {knownLetterCounts: {s:2}})).to.equal(0);
     expect(rateWord('sassy', stats, {knownLetterCounts: {s:3}})).to.be.above(0);
+  });
+  
+  it('wordMatchesCriteria', () => {
+    //a few real words for particular tests, then other fake words to ensure all letters are represented
+    //const words = ['myths', 'truss', 'tessa', 'sassy', 'thequ', 'ickbr', 'ownfo', 'xjump', 'sover', 'thela', 'zydog'];
+    
+    expect(wordMatchesCriteria('myths')).to.be.true;
+    
+    expect(wordMatchesCriteria('myths', {invalidLetters: new Set([])})).to.be.true;
+    expect(wordMatchesCriteria('myths', {invalidLetters: new Set(['m'])})).to.be.false;
+    expect(wordMatchesCriteria('myths', {invalidLetters: new Set(['x'])})).to.be.true;
+    expect(wordMatchesCriteria('myths', {invalidLetters: new Set(['x', 'h', 'p'])})).to.be.false;
+    
+    expect(wordMatchesCriteria('myths', {invalidLettersByPosition: [ new Set([]), new Set([]), new Set([]), new Set([]), new Set([]) ]})).to.be.true;
+    expect(wordMatchesCriteria('myths', {invalidLettersByPosition: [ new Set(['m']), new Set(['a']), new Set(['b']), new Set(['c']), new Set(['d']) ]})).to.be.false;
+    expect(wordMatchesCriteria('myths', {invalidLettersByPosition: [ new Set(['s']), new Set(['m']), new Set(['y']), new Set(['t']), new Set(['h']) ]})).to.be.true;
+    
+    expect(wordMatchesCriteria('myths', {correctLetters: ['m', null, null, null, null]})).to.be.true;
+    expect(wordMatchesCriteria('myths', {correctLetters: [null, null, null, null, 's']})).to.be.true;
+    expect(wordMatchesCriteria('myths', {correctLetters: [null, null, 'y', null, null]})).to.be.false;
+    expect(wordMatchesCriteria('myths', {correctLetters: [null, null, null, null, null]})).to.be.true;
+    
+    expect(wordMatchesCriteria('myths', {requiredLetters: []})).to.be.true;
+    expect(wordMatchesCriteria('myths', {requiredLetters: ['e']})).to.be.false;
+    expect(wordMatchesCriteria('myths', {requiredLetters: ['t']})).to.be.true;
+    expect(wordMatchesCriteria('myths', {requiredLetters: ['s']})).to.be.true;
+    expect(wordMatchesCriteria('myths', {requiredLetters: ['s', 't']})).to.be.true;
+    expect(wordMatchesCriteria('myths', {requiredLetters: ['s', 't', 's']})).to.be.false;
+    expect(wordMatchesCriteria('truss', {requiredLetters: ['s', 't', 's']})).to.be.true;
+    expect(wordMatchesCriteria('truss', {requiredLetters: ['s', 's', 's']})).to.be.false;
+    expect(wordMatchesCriteria('sassy', {requiredLetters: ['s', 's', 's']})).to.be.true;
+    
+    expect(wordMatchesCriteria('myths', {knownLetterCounts: {}})).to.be.true;
+    expect(wordMatchesCriteria('myths', {knownLetterCounts: {s:1}})).to.be.true;
+    expect(wordMatchesCriteria('myths', {knownLetterCounts: {s:2}})).to.be.false;
+    expect(wordMatchesCriteria('truss', {knownLetterCounts: {s:1}})).to.be.false;
+    expect(wordMatchesCriteria('truss', {knownLetterCounts: {s:2}})).to.be.true;
+    expect(wordMatchesCriteria('truss', {knownLetterCounts: {s:3}})).to.be.false;
+    expect(wordMatchesCriteria('sassy', {knownLetterCounts: {s:1}})).to.be.false;
+    expect(wordMatchesCriteria('sassy', {knownLetterCounts: {s:2}})).to.be.false;
+    expect(wordMatchesCriteria('sassy', {knownLetterCounts: {s:3}})).to.be.true;
   });
 });
