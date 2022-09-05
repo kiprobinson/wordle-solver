@@ -65,7 +65,7 @@ const wordList:string[] = [
 
 
 
-describe.only('test word-list-index.ts methods', () => {
+describe('test word-list-index.ts methods', () => {
   const wordListIndex = new WordListIndex(wordList);
   
   it('getMaskForWordsWithLetterInPosition', () => {

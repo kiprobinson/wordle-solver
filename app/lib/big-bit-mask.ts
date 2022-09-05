@@ -3,8 +3,9 @@ import util from 'util';
 const BITS_PER_ELEMENT = Uint32Array.BYTES_PER_ELEMENT * 8;
 
 class BigBitMask {
-  private length: number;
-  private data: Uint32Array;
+  private readonly length: number;
+  private readonly data: Uint32Array;
+  private readonly lastByteMask: number;
   
   constructor(binaryString:string);
   constructor(booleans:boolean[]);
@@ -16,6 +17,7 @@ class BigBitMask {
       this.length = other.length;
       this.data = new Uint32Array(other.data.length);
       this.data.set(other.data);
+      this.lastByteMask = other.lastByteMask;
       return;
     }
     
@@ -57,6 +59,7 @@ class BigBitMask {
       if (bitMask !== 1)
         this.data[byteIndex] = val;
       
+      this.lastByteMask = BigBitMask.computeMaskForLastByte(this.length);
       return;
     }
     
@@ -69,8 +72,15 @@ class BigBitMask {
     this.length = length;
     this.data = new Uint32Array(Math.ceil(this.length / BITS_PER_ELEMENT));
     
+    this.lastByteMask = BigBitMask.computeMaskForLastByte(this.length);
+    
     if(defaultFilled) {
-      throw new Error ("NOT IMPLEMENTED!");
+      for(let i = 0; i < this.data.length; i++) {
+        if(i === this.data.length - 1)
+          this.data[i] = 0xffffffff & this.lastByteMask;
+        else
+          this.data[i] = 0xffffffff;
+      }
     }
   }
   
@@ -156,6 +166,20 @@ class BigBitMask {
   }
   
   /**
+   * Performs bitwise negation of the mask
+   */
+  negate():BigBitMask {
+    const result = new BigBitMask(this);
+    for(let i = 0; i < result.data.length; i++) {
+      if(i === result.data.length - 1)
+        result.data[i] = ~result.data[i] & result.lastByteMask;
+      else
+        result.data[i] = ~result.data[i];
+    }
+    return result;
+  }
+  
+  /**
    * Performs union (bitwise or) of this mask and one or more other masks.
    */
   union(...masks:BigBitMask[]):BigBitMask {
@@ -198,10 +222,18 @@ class BigBitMask {
    * Based on: https://stackoverflow.com/a/43122214/18511
    */
   private static bitCount32(n:number):number {
-    n = n & 0xffffffff;
+    //n = n & 0xffffffff; // not necessary?
     n = n - ((n >> 1) & 0x55555555);
     n = (n & 0x33333333) + ((n >> 2) & 0x33333333);
     return ((n + (n >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
+  }
+  
+  private static computeMaskForLastByte(length:number):number {
+    const bitsInLastByte = length % 32;
+    if(bitsInLastByte === 0)
+      return 0xffffffff;
+    else
+      return ((1 << bitsInLastByte) - 1) & 0xffffffff;
   }
 };
 
