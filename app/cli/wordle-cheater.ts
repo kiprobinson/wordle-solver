@@ -2,6 +2,8 @@ import CliUtils from "../lib/cli-utils";
 import { getWordListStats, getSortedWordList, RateWordCriteria, WordListStats, getEmptyRateWordCriteria, DEFAULT_WORD_LIST } from "../lib/word-list";
 import { formatGuessPerResult, getResultForGuess, updateCriteriaPerResult } from "../lib/wordle-engine";
 
+const NUM_WORDS_TO_SHOW = 40;
+
 type GuessHistory = Array<{guess:string, result:string}>;
 
 /**
@@ -66,8 +68,8 @@ const showBestGuesses = (wordList:string[], criteria:RateWordCriteria): {abort:b
   const numPossibleWords = sortedWordList.reduce((count, entry) => count + (entry.score > 0 ? 1 : 0), 0);
   
   console.log();
-  console.log(`I found ${numPossibleWords} possible words. Here are my top ${Math.min(numPossibleWords, 20)} suggestions for you to try:`);
-  for(let i = 0; i < numPossibleWords && i < 20; i++)
+  console.log(`I found ${numPossibleWords} possible words. Here are my top ${Math.min(numPossibleWords, NUM_WORDS_TO_SHOW)} suggestions for you to try:`);
+  for(let i = 0; i < numPossibleWords && i < NUM_WORDS_TO_SHOW; i++)
     console.log(`${i+1}: ${sortedWordList[i].word}`);
   
   return {abort: false, newWordList};
