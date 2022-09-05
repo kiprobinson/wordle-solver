@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import { FrequencyTable } from './frequency-table';
 import { arrayCount, arrayRemoveValue } from './util';
+import { getResultForGuess, updateCriteriaPerResult } from './wordle-engine';
 
 export type WordListStats = {
   overallFrequencies: FrequencyTable;
@@ -12,7 +13,14 @@ type SortedWordListEntry = {
   score: number;
 }
 
+type SortedWordListEntryV2 = {
+  word: string;
+  score: number;
+  easyModeOnly: boolean;
+}
+
 export type SortedWordList = Array<SortedWordListEntry>;
+export type SortedWordListV2 = Array<SortedWordListEntryV2>;
 
 export type RateWordCriteria = {
   /** Letters which are *not* in the word. */
@@ -43,15 +51,37 @@ export type RateWordCriteria = {
    *   in the solution.
    */
   knownLetterCounts?: Record<string, number>;
+  
+  easyMode?: boolean;
 }
 
-export const getEmptyRateWordCriteria = ():Required<RateWordCriteria> => ({
+export const getEmptyRateWordCriteria = (easyMode:boolean=false):Required<RateWordCriteria> => ({
   invalidLetters: new Set(),
   invalidLettersByPosition: [new Set(), new Set(), new Set(), new Set(), new Set()],
   correctLetters: [null, null, null, null, null],
   requiredLetters: [],
   knownLetterCounts: {},
+  easyMode,
 });
+
+export const sanitizeCriteria = (criteria:RateWordCriteria):Required<RateWordCriteria> => {
+  const result = getEmptyRateWordCriteria();
+  
+  if(criteria.invalidLetters instanceof Set)
+    result.invalidLetters = new Set([...criteria.invalidLetters]);
+  if(Array.isArray(criteria.invalidLettersByPosition) && criteria.invalidLettersByPosition.length === 5 && criteria.invalidLettersByPosition.every(o => o instanceof Set))
+    result.invalidLettersByPosition = criteria.invalidLettersByPosition.map(o => new Set([...o]));
+  if(Array.isArray(criteria.correctLetters) && criteria.correctLetters.length === 5 && criteria.correctLetters.every(s => s === null || 'string' === typeof s))
+    result.correctLetters = [...criteria.correctLetters];
+  if(Array.isArray(criteria.requiredLetters))
+    result.requiredLetters = [...criteria.requiredLetters];
+  if(criteria.knownLetterCounts)
+    result.knownLetterCounts = {...criteria.knownLetterCounts};
+  if('boolean' === typeof criteria.easyMode)
+    result.easyMode = criteria.easyMode;
+  
+  return result;
+}
 
 const VALID_WORD_REGEX = /^[a-z]{5}$/;
 
@@ -166,6 +196,48 @@ export const wordMatchesCriteria = (word:string, criteria:RateWordCriteria={}):b
 }
 
 /**
+ * Assigns a score to a word, indicating how good of a guess that word is.
+ * This version is based on how many words on average will be left after
+ * this guess.
+ */
+export const rateWordV2 = (word:string, wordList:string[]=DEFAULT_WORD_LIST, criteria:RateWordCriteria={}):SortedWordListEntryV2 => {
+  //test - word is swill, you guess "sxill". in easy mode, some invalid guesses might help more than a valid one.
+  
+  console.log(`rating word: ${word}`);
+  
+  const ret:SortedWordListEntryV2 = {
+    word,
+    score: 0,
+    easyModeOnly: !wordMatchesCriteria(word, criteria),
+  };
+  
+  // if this word is only allowed in easy mode, but we are not in easy mode, just return early
+  if(ret.easyModeOnly && !criteria.easyMode)
+    return ret;
+  
+  // get the list of words that could possibly be the correct word at this point
+  const possibleWords = wordList.filter(word => wordMatchesCriteria(word, criteria));
+  
+  if(possibleWords.length === 0)
+    throw new Error('No words are possible at this point');
+  
+  // go through every possible correct word, then assume that we guess "word", and see how many
+  // possible words would remain after that guess. The best guess is the one that leaves the
+  // fewest average answers
+  let sumRemainingWords = 0;
+  for(let possibleWord in possibleWords) {
+    const guessResult = getResultForGuess(word, possibleWord);
+    const updatedCriteria = sanitizeCriteria(criteria);
+    updateCriteriaPerResult(word, guessResult, updatedCriteria);
+    sumRemainingWords += possibleWords.filter(testWord => wordMatchesCriteria(testWord, criteria)).length;
+  }
+  
+  ret.score = sumRemainingWords / possibleWords.length;
+  
+  return ret;
+}
+
+/**
  * Gets a sorted word list, evaluating the score for each word.
  */
 export const getSortedWordList = (stats:WordListStats, criteria:RateWordCriteria={}, wordList:string[]=DEFAULT_WORD_LIST):SortedWordList => {
@@ -175,6 +247,14 @@ export const getSortedWordList = (stats:WordListStats, criteria:RateWordCriteria
   }));
   
   list.sort((a, b) => b.score - a.score);
+  
+  return list;
+}
+
+export const getSortedWordListV2 = (criteria:RateWordCriteria={}, wordList:string[]=DEFAULT_WORD_LIST):SortedWordListV2 => {
+  const list:SortedWordListV2 = wordList.map(word => rateWordV2(word, wordList, criteria));
+  
+  list.filter(entry => entry.score > 0).sort((a, b) => a.score - b.score);
   
   return list;
 }

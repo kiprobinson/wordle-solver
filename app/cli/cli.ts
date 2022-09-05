@@ -3,11 +3,16 @@ import dumpStats from "./dump-stats";
 import dumpWordRatings from './dump-word-ratings';
 import evaluateSolver from './evaluate-solver';
 import cheatAtWordle from './wordle-cheater';
+import cheatAtWordleV2 from './wordle-cheater-v2';
 
 const menuOptions:Array<{name:string, handler:Function}> = [
   {
     name: 'Cheat at Wordle ;)',
     handler: cheatAtWordle,
+  },
+  {
+    name: 'Cheat at Wordle - Version 2 (min average remaining words)',
+    handler: cheatAtWordleV2,
   },
   {
     name: 'Show the best words to start with.',
