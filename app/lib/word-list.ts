@@ -1,6 +1,8 @@
 import * as fs from 'fs';
+import BigBitMask from './big-bit-mask';
 import { FrequencyTable } from './frequency-table';
 import { arrayCount, arrayRemoveValue } from './util';
+import WordListIndex from './word-list-index';
 
 export type WordListStats = {
   overallFrequencies: FrequencyTable;
@@ -24,7 +26,7 @@ export type RateWordCriteria = {
   /** The letters which we know are correct. */
   correctLetters?: Array<string|null>;
   
-  /** 
+  /**
    * Letters which we know have to be in the answer at least a certain number
    * of times, but we don't know exactly how many or in which positions.
    */
@@ -170,10 +172,62 @@ export const wordMatchesCriteria = (word:string, criteria:RateWordCriteria={}):b
   return true;
 }
 
+export const applyCriteriaToWordList = (criteria:RateWordCriteria, wordList:string[], wordListIndex:WordListIndex):string[] => {
+  // masks where a `1` means to include the word
+  const includeMasks:BigBitMask[] = [];
+    
+  // masks where a `1` means to exclude the word
+  const excludeMasks:BigBitMask[] = [];
+  
+  criteria.invalidLetters?.forEach(letter => includeMasks.push(wordListIndex.getMaskForWordsWithExactLetterCount(0, letter)));
+  
+  criteria.invalidLettersByPosition?.forEach((letters, position) => {
+    letters?.forEach(letter => excludeMasks.push(wordListIndex.getMaskForWordsWithLetterInPosition(position, letter)));
+  });
+  
+  criteria.correctLetters?.forEach((letter, position) => {
+    if (letter)
+      includeMasks.push(wordListIndex.getMaskForWordsWithLetterInPosition(position, letter));
+  })
+  
+  if(criteria.minimumLetterCounts) {
+    Object.entries(criteria.minimumLetterCounts).forEach(([letter, count]) => {
+      includeMasks.push(wordListIndex.getMaskForWordsWithMinimumLetterCount(count, letter));
+    })
+  }
+  
+  if (criteria.knownLetterCounts) {
+    Object.entries(criteria.knownLetterCounts).forEach(([letter, count]) => {
+      includeMasks.push(wordListIndex.getMaskForWordsWithExactLetterCount(count, letter));
+    });
+  }
+  
+  if(excludeMasks.length && !includeMasks.length)
+    includeMasks.push(new BigBitMask(wordList.length, true));
+  
+  if(includeMasks.length) {
+    const includeMask = includeMasks.length > 1 ? BigBitMask.intersect(...includeMasks) : includeMasks[0];
+    
+    let finalMask = includeMask;
+    if(excludeMasks.length) {
+      const excludeMask = excludeMasks.length > 1 ? BigBitMask.union(...excludeMasks) : excludeMasks[0];
+      finalMask = includeMask.subtract(excludeMask);
+    }
+    
+    wordList = finalMask.apply(wordList);
+  }
+  
+  return wordList;
+}
+
 /**
  * Gets a sorted word list, evaluating the score for each word.
  */
-export const getSortedWordList = (stats:WordListStats, criteria:RateWordCriteria={}, wordList:string[]=DEFAULT_WORD_LIST):SortedWordList => {
+export const getSortedWordList = (stats:WordListStats, criteria:RateWordCriteria={}, wordList:string[]=DEFAULT_WORD_LIST, wordListIndex?:WordListIndex):SortedWordList => {
+  if (wordListIndex) {
+    wordList = applyCriteriaToWordList(criteria, wordList, wordListIndex);
+  }
+  
   const list:SortedWordList = wordList.map(word => ({
     word,
     score: rateWord(word, stats, criteria),

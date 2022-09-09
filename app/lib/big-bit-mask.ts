@@ -183,32 +183,46 @@ class BigBitMask {
    * Performs union (bitwise or) of this mask and one or more other masks.
    */
   union(...masks:BigBitMask[]):BigBitMask {
-    return this.bitwiseOpImplementation(masks, (a, b) => a | b);
+    return BigBitMask.bitwiseOpImplementation([this, ...masks], (a, b) => a | b);
+  }
+  
+  /**
+   * Performs union (bitwise or) of two or more masks.
+   */
+  static union(...masks:BigBitMask[]):BigBitMask {
+    return BigBitMask.bitwiseOpImplementation(masks, (a, b) => a | b);
   }
   
   /**
    * Performs intersect (bitwise and) of this mask and one or more other masks.
    */
   intersect(...masks:BigBitMask[]):BigBitMask {
-    return this.bitwiseOpImplementation(masks, (a, b) => a & b);
+    return BigBitMask.bitwiseOpImplementation([this, ...masks], (a, b) => a & b);
+  }
+  
+  /**
+   * Performs intersect (bitwise and) of this mask and one or more other masks.
+   */
+  static intersect(...masks:BigBitMask[]):BigBitMask {
+    return BigBitMask.bitwiseOpImplementation(masks, (a, b) => a & b);
   }
   
   /**
    * Subtracts the other mask from this mask (bitwise `this & ~other`).
    */
   subtract(other:BigBitMask):BigBitMask {
-    return this.bitwiseOpImplementation([other], (a, b) => a & ~b);
+    return BigBitMask.bitwiseOpImplementation([this, other], (a, b) => a & ~b);
   }
   
-  private bitwiseOpImplementation(masks:BigBitMask[], op:{(a:number, b:number):number}):BigBitMask {
-    if (masks.length === 0)
+  private static bitwiseOpImplementation(masks:BigBitMask[], op:{(a:number, b:number):number}):BigBitMask {
+    if (masks.length < 2)
       throw new Error('Must provide at least one other mask');
     
-    if (masks.some(mask => mask.length !== this.length))
+    if (masks.some(mask => mask.length !== masks[0].length))
       throw new Error('Masks must all be the same length');
     
-    const result = new BigBitMask(this);
-    for(let i = 0; i < masks.length; i++) {
+    const result = new BigBitMask(masks[0]);
+    for(let i = 1; i < masks.length; i++) {
       for(let j = 0; j < result.data.length; j++) {
         result.data[j] = op(result.data[j], masks[i].data[j]);
       }

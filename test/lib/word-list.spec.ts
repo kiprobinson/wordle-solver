@@ -1,5 +1,6 @@
 import { expect } from "chai";
-import { getWordListStats, wordMatchesCriteria, rateWord } from "../../app/lib/word-list";
+import { getWordListStats, wordMatchesCriteria, rateWord, applyCriteriaToWordList } from "../../app/lib/word-list";
+import WordListIndex from "../../app/lib/word-list-index";
 
 
 describe('test word-list.ts methods', () => {
@@ -168,5 +169,84 @@ describe('test word-list.ts methods', () => {
     expect(wordMatchesCriteria('sassy', {knownLetterCounts: {s:1}})).to.be.false;
     expect(wordMatchesCriteria('sassy', {knownLetterCounts: {s:2}})).to.be.false;
     expect(wordMatchesCriteria('sassy', {knownLetterCounts: {s:3}})).to.be.true;
+  });
+  
+  it('applyCriteriaToWordList', () => {
+    const wordList = ['myths', 'truss', 'tessa', 'sassy', 'thequ', 'ickbr', 'ownfo', 'xjump', 'sover', 'thela', 'zydog'];
+    const wordListIndex = new WordListIndex(wordList);
+    expect(applyCriteriaToWordList({}, wordList, wordListIndex)).to.deep.equal([
+      'myths', 'truss', 'tessa', 'sassy', 'thequ', 'ickbr', 'ownfo', 'xjump', 'sover', 'thela', 'zydog',
+    ]);
+    
+    expect(applyCriteriaToWordList({invalidLetters: new Set([])}, wordList, wordListIndex)).to.deep.equal([
+      'myths', 'truss', 'tessa', 'sassy', 'thequ', 'ickbr', 'ownfo', 'xjump', 'sover', 'thela', 'zydog',
+    ]);
+    expect(applyCriteriaToWordList({invalidLetters: new Set(['m'])}, wordList, wordListIndex)).to.deep.equal([
+      'truss', 'tessa', 'sassy', 'thequ', 'ickbr', 'ownfo', 'sover', 'thela', 'zydog',
+    ]);
+    expect(applyCriteriaToWordList({invalidLetters: new Set(['x'])}, wordList, wordListIndex)).to.deep.equal([
+      'myths', 'truss', 'tessa', 'sassy', 'thequ', 'ickbr', 'ownfo', 'sover', 'thela', 'zydog',
+    ]);
+    expect(applyCriteriaToWordList({invalidLetters: new Set(['x', 'h', 'p'])}, wordList, wordListIndex)).to.deep.equal([
+      'truss', 'tessa', 'sassy', 'ickbr', 'ownfo', 'sover', 'zydog',
+    ]);
+    
+    expect(applyCriteriaToWordList({invalidLettersByPosition: [ new Set([]), new Set([]), new Set([]), new Set([]), new Set([]) ]}, wordList, wordListIndex)).to.deep.equal([
+      'myths', 'truss', 'tessa', 'sassy', 'thequ', 'ickbr', 'ownfo', 'xjump', 'sover', 'thela', 'zydog',
+    ]);
+    expect(applyCriteriaToWordList({invalidLettersByPosition: [ new Set(['m']), new Set(['a']), new Set(['b']), new Set(['c']), new Set(['d']) ]}, wordList, wordListIndex)).to.deep.equal([
+      'truss', 'tessa', 'thequ', 'ickbr', 'ownfo', 'xjump', 'sover', 'thela', 'zydog',
+    ]);
+    expect(applyCriteriaToWordList({invalidLettersByPosition: [ new Set(['s']), new Set(['m']), new Set(['y']), new Set(['t']), new Set(['h']) ]}, wordList, wordListIndex)).to.deep.equal([
+      'myths', 'truss', 'tessa', 'thequ', 'ickbr', 'ownfo', 'xjump', 'thela', 'zydog',
+    ]);
+    
+    expect(applyCriteriaToWordList({correctLetters: ['m', null, null, null, null]}, wordList, wordListIndex)).to.deep.equal([
+      'myths',
+    ]);
+    expect(applyCriteriaToWordList({correctLetters: [null, null, null, null, 's']}, wordList, wordListIndex)).to.deep.equal([
+      'myths', 'truss',
+    ]);
+    expect(applyCriteriaToWordList({correctLetters: [null, null, 'y', null, null]}, wordList, wordListIndex)).to.deep.equal([
+      
+    ]);
+    expect(applyCriteriaToWordList({correctLetters: [null, null, null, null, null]}, wordList, wordListIndex)).to.deep.equal([
+      'myths', 'truss', 'tessa', 'sassy', 'thequ', 'ickbr', 'ownfo', 'xjump', 'sover', 'thela', 'zydog',
+    ]);
+    
+    expect(applyCriteriaToWordList({minimumLetterCounts: {}}, wordList, wordListIndex)).to.deep.equal([
+      'myths', 'truss', 'tessa', 'sassy', 'thequ', 'ickbr', 'ownfo', 'xjump', 'sover', 'thela', 'zydog',
+    ]);
+    expect(applyCriteriaToWordList({minimumLetterCounts: {e:1}}, wordList, wordListIndex)).to.deep.equal([
+      'tessa', 'thequ', 'sover', 'thela',
+    ]);
+    expect(applyCriteriaToWordList({minimumLetterCounts: {t:1}}, wordList, wordListIndex)).to.deep.equal([
+      'myths', 'truss', 'tessa', 'thequ', 'thela',
+    ]);
+    expect(applyCriteriaToWordList({minimumLetterCounts: {s:1}}, wordList, wordListIndex)).to.deep.equal([
+      'myths', 'truss', 'tessa', 'sassy', 'sover',
+    ]);
+    expect(applyCriteriaToWordList({minimumLetterCounts: {s:1, t:1}}, wordList, wordListIndex)).to.deep.equal([
+      'myths', 'truss', 'tessa',
+    ]);
+    expect(applyCriteriaToWordList({minimumLetterCounts: {s:2, t:1}}, wordList, wordListIndex)).to.deep.equal([
+      'truss', 'tessa',
+    ]);
+    expect(applyCriteriaToWordList({minimumLetterCounts: {s:3}}, wordList, wordListIndex)).to.deep.equal([
+      'sassy',
+    ]);
+    
+    expect(applyCriteriaToWordList({knownLetterCounts: {}}, wordList, wordListIndex)).to.deep.equal([
+      'myths', 'truss', 'tessa', 'sassy', 'thequ', 'ickbr', 'ownfo', 'xjump', 'sover', 'thela', 'zydog',
+    ]);
+    expect(applyCriteriaToWordList({knownLetterCounts: {s:1}}, wordList, wordListIndex)).to.deep.equal([
+      'myths', 'sover',
+    ]);
+    expect(applyCriteriaToWordList({knownLetterCounts: {s:2}}, wordList, wordListIndex)).to.deep.equal([
+      'truss', 'tessa',
+    ]);
+    expect(applyCriteriaToWordList({knownLetterCounts: {s:3}}, wordList, wordListIndex)).to.deep.equal([
+      'sassy',
+    ]);
   });
 });
