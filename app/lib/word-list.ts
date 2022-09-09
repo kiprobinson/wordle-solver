@@ -25,12 +25,10 @@ export type RateWordCriteria = {
   correctLetters?: Array<string|null>;
   
   /** 
-   * Letters which we know have to be in the answer, but we don't know where.
-   * Defined as an array (rather than set) because e.g. if the word is "tasty"
-   * and we guessed "stint", we would know that there are *two* Ts that have
-   * to be in the answer.
+   * Letters which we know have to be in the answer at least a certain number
+   * of times, but we don't know exactly how many or in which positions.
    */
-  requiredLetters?: string[];
+  minimumLetterCounts?: Record<string, number>;
   
   /**
    * Stores any letters for which we know exactly how many of that letter is
@@ -49,7 +47,7 @@ export const getEmptyRateWordCriteria = ():Required<RateWordCriteria> => ({
   invalidLetters: new Set(),
   invalidLettersByPosition: [new Set(), new Set(), new Set(), new Set(), new Set()],
   correctLetters: [null, null, null, null, null],
-  requiredLetters: [],
+  minimumLetterCounts: {},
   knownLetterCounts: {},
 });
 
@@ -101,13 +99,17 @@ export const rateWord = (word:string, stats:WordListStats, criteria:RateWordCrit
   
   let score = 0;
   
-  const requiredLetters = criteria.requiredLetters ? [...criteria.requiredLetters] : [];
+  const minimumLetterCounts = criteria.minimumLetterCounts ? { ...criteria.minimumLetterCounts } : {};
   
   const lettersProcessed = new Set<string>();
   for(let i = 0; i < 5; i++) {
     const letter = word[i];
     
-    const wasRequiredLetter = arrayRemoveValue(requiredLetters, letter);
+    const wasRequiredLetter = !!minimumLetterCounts[letter];
+    
+    if(wasRequiredLetter) {
+      minimumLetterCounts[letter]--;
+    }
     
     // award points based on how likely this letter is to be the right answer at this position.
     // But if this wasn't a required letter, multiply the position-specific points by 1/1000,
@@ -132,7 +134,7 @@ export const rateWord = (word:string, stats:WordListStats, criteria:RateWordCrit
  * Returns whether the given word matches the provided criteria.
  */
 export const wordMatchesCriteria = (word:string, criteria:RateWordCriteria={}):boolean => {
-  const requiredLetters = criteria.requiredLetters ? [...criteria.requiredLetters] : [];
+  const minimumLetterCounts = criteria.minimumLetterCounts ? { ...criteria.minimumLetterCounts } : {};
   
   for(let i = 0; i < 5; i++) {
     const letter = word[i];
@@ -146,11 +148,14 @@ export const wordMatchesCriteria = (word:string, criteria:RateWordCriteria={}):b
     if(criteria?.correctLetters?.[i] && criteria.correctLetters[i] !== letter)
       return false;
     
-    arrayRemoveValue(requiredLetters, letter);
+    if(minimumLetterCounts[letter] > 1)
+      minimumLetterCounts[letter]--;
+    else if (minimumLetterCounts[letter])
+      delete minimumLetterCounts[letter];
   }
   
   // if we didn't have all required letters, this can't be a match.
-  if(requiredLetters.length)
+  if(Object.keys(minimumLetterCounts).length)
     return false;
   
   // check for character counts if any are known

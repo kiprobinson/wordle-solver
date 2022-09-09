@@ -108,15 +108,15 @@ describe('test word-list.ts methods', () => {
     expect(rateWord('myths', stats, {correctLetters: [null, null, 'y', null, null]})).to.equal(0);
     expect(rateWord('myths', stats, {correctLetters: [null, null, null, null, null]})).to.be.above(0);
     
-    expect(rateWord('myths', stats, {requiredLetters: []})).to.be.above(0);
-    expect(rateWord('myths', stats, {requiredLetters: ['e']})).to.equal(0);
-    expect(rateWord('myths', stats, {requiredLetters: ['t']})).to.be.above(0);
-    expect(rateWord('myths', stats, {requiredLetters: ['s']})).to.be.above(0);
-    expect(rateWord('myths', stats, {requiredLetters: ['s', 't']})).to.be.above(0);
-    expect(rateWord('myths', stats, {requiredLetters: ['s', 't', 's']})).to.equal(0);
-    expect(rateWord('truss', stats, {requiredLetters: ['s', 't', 's']})).to.be.above(0);
-    expect(rateWord('truss', stats, {requiredLetters: ['s', 's', 's']})).to.equal(0);
-    expect(rateWord('sassy', stats, {requiredLetters: ['s', 's', 's']})).to.be.above(0);
+    expect(rateWord('myths', stats, {minimumLetterCounts: {}})).to.be.above(0);
+    expect(rateWord('myths', stats, {minimumLetterCounts: {e:1}})).to.equal(0);
+    expect(rateWord('myths', stats, {minimumLetterCounts: {t:1}})).to.be.above(0);
+    expect(rateWord('myths', stats, {minimumLetterCounts: {s:1}})).to.be.above(0);
+    expect(rateWord('myths', stats, {minimumLetterCounts: {s:1, t:1}})).to.be.above(0);
+    expect(rateWord('myths', stats, {minimumLetterCounts: {s:2, t:1}})).to.equal(0);
+    expect(rateWord('truss', stats, {minimumLetterCounts: {s:2, t:1}})).to.be.above(0);
+    expect(rateWord('truss', stats, {minimumLetterCounts: {s:3}})).to.equal(0);
+    expect(rateWord('sassy', stats, {minimumLetterCounts: {s:3}})).to.be.above(0);
     
     expect(rateWord('myths', stats, {knownLetterCounts: {}})).to.be.above(0);
     expect(rateWord('myths', stats, {knownLetterCounts: {s:1}})).to.be.above(0);
@@ -149,15 +149,15 @@ describe('test word-list.ts methods', () => {
     expect(wordMatchesCriteria('myths', {correctLetters: [null, null, 'y', null, null]})).to.be.false;
     expect(wordMatchesCriteria('myths', {correctLetters: [null, null, null, null, null]})).to.be.true;
     
-    expect(wordMatchesCriteria('myths', {requiredLetters: []})).to.be.true;
-    expect(wordMatchesCriteria('myths', {requiredLetters: ['e']})).to.be.false;
-    expect(wordMatchesCriteria('myths', {requiredLetters: ['t']})).to.be.true;
-    expect(wordMatchesCriteria('myths', {requiredLetters: ['s']})).to.be.true;
-    expect(wordMatchesCriteria('myths', {requiredLetters: ['s', 't']})).to.be.true;
-    expect(wordMatchesCriteria('myths', {requiredLetters: ['s', 't', 's']})).to.be.false;
-    expect(wordMatchesCriteria('truss', {requiredLetters: ['s', 't', 's']})).to.be.true;
-    expect(wordMatchesCriteria('truss', {requiredLetters: ['s', 's', 's']})).to.be.false;
-    expect(wordMatchesCriteria('sassy', {requiredLetters: ['s', 's', 's']})).to.be.true;
+    expect(wordMatchesCriteria('myths', {minimumLetterCounts: {}})).to.be.true;
+    expect(wordMatchesCriteria('myths', {minimumLetterCounts: {e:1}})).to.be.false;
+    expect(wordMatchesCriteria('myths', {minimumLetterCounts: {t:1}})).to.be.true;
+    expect(wordMatchesCriteria('myths', {minimumLetterCounts: {s:1}})).to.be.true;
+    expect(wordMatchesCriteria('myths', {minimumLetterCounts: {s:1, t:1}})).to.be.true;
+    expect(wordMatchesCriteria('myths', {minimumLetterCounts: {s:2, t:1}})).to.be.false;
+    expect(wordMatchesCriteria('truss', {minimumLetterCounts: {s:2, t:1}})).to.be.true;
+    expect(wordMatchesCriteria('truss', {minimumLetterCounts: {s:3}})).to.be.false;
+    expect(wordMatchesCriteria('sassy', {minimumLetterCounts: {s:3}})).to.be.true;
     
     expect(wordMatchesCriteria('myths', {knownLetterCounts: {}})).to.be.true;
     expect(wordMatchesCriteria('myths', {knownLetterCounts: {s:1}})).to.be.true;

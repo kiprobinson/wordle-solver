@@ -55,7 +55,7 @@ describe('test wordle-engine.ts methods', () => {
     expect([...criteria.invalidLettersByPosition[3]]).to.deep.equal(['e']);
     expect([...criteria.invalidLettersByPosition[4]]).to.deep.equal([]);
     expect(criteria.knownLetterCounts).to.deep.equal({});
-    expect(criteria.requiredLetters).to.deep.equal(['t', 'r', 's']);
+    expect(criteria.minimumLetterCounts).to.deep.equal({t:1, r:1, s:1});
     
     updateCriteriaPerResult('tours', 'gbgyg', criteria);
     expect(criteria.correctLetters).to.deep.equal(['t', null, 'u', null, 's']);
@@ -66,7 +66,7 @@ describe('test wordle-engine.ts methods', () => {
     expect([...criteria.invalidLettersByPosition[3]]).to.deep.equal(['e', 'r']);
     expect([...criteria.invalidLettersByPosition[4]]).to.deep.equal([]);
     expect(criteria.knownLetterCounts).to.deep.equal({});
-    expect(criteria.requiredLetters).to.deep.equal(['t', 'r', 's', 'u']);
+    expect(criteria.minimumLetterCounts).to.deep.equal({t:1, r:1, s:1, u:1});
   });
   
   //If word is "myths" and we guess "truss" (ybbbg) or "tessa" (ybybb),
@@ -81,7 +81,7 @@ describe('test wordle-engine.ts methods', () => {
     expect([...criteria.invalidLettersByPosition[3]]).to.deep.equal(['s']);
     expect([...criteria.invalidLettersByPosition[4]]).to.deep.equal([]);
     expect(criteria.knownLetterCounts).to.deep.equal({s:1});
-    expect(criteria.requiredLetters).to.deep.equal(['t', 's']);
+    expect(criteria.minimumLetterCounts).to.deep.equal({t:1});
   });
   
   it('updateCriteriaPerResult - word is "myths" and we guess "tessa"', () => {
@@ -95,7 +95,7 @@ describe('test wordle-engine.ts methods', () => {
     expect([...criteria.invalidLettersByPosition[3]]).to.deep.equal(['s']);
     expect([...criteria.invalidLettersByPosition[4]]).to.deep.equal(['a']);
     expect(criteria.knownLetterCounts).to.deep.equal({s:1});
-    expect(criteria.requiredLetters).to.deep.equal(['t', 's']);
+    expect(criteria.minimumLetterCounts).to.deep.equal({t:1});
   });
   
   it('updateCriteriaPerResult - word is "truss" and we guess "tessa"', () => {
@@ -109,7 +109,7 @@ describe('test wordle-engine.ts methods', () => {
     expect([...criteria.invalidLettersByPosition[3]]).to.deep.equal([]);
     expect([...criteria.invalidLettersByPosition[4]]).to.deep.equal(['a']);
     expect(criteria.knownLetterCounts).to.deep.equal({});
-    expect(criteria.requiredLetters).to.deep.equal(['t', 's', 's']);
+    expect(criteria.minimumLetterCounts).to.deep.equal({t:1, s:2});
   });
   
   it('updateCriteriaPerResult - word is "truss" and we guess "sassy"', () => {
@@ -123,6 +123,6 @@ describe('test wordle-engine.ts methods', () => {
     expect([...criteria.invalidLettersByPosition[3]]).to.deep.equal([]);
     expect([...criteria.invalidLettersByPosition[4]]).to.deep.equal(['y']);
     expect(criteria.knownLetterCounts).to.deep.equal({s: 2});
-    expect(criteria.requiredLetters).to.deep.equal(['s', 's']);
+    expect(criteria.minimumLetterCounts).to.deep.equal({});
   });
 });
