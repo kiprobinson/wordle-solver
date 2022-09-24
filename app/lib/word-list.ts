@@ -1,6 +1,8 @@
 import * as fs from 'fs';
+import BigBitMask from './big-bit-mask';
 import { FrequencyTable } from './frequency-table';
 import { arrayCount, arrayRemoveValue } from './util';
+import WordListIndex from './word-list-index';
 import { getResultForGuess, updateCriteriaPerResult } from './wordle-engine';
 
 export type WordListStats = {
@@ -32,13 +34,11 @@ export type RateWordCriteria = {
   /** The letters which we know are correct. */
   correctLetters?: Array<string|null>;
   
-  /** 
-   * Letters which we know have to be in the answer, but we don't know where.
-   * Defined as an array (rather than set) because e.g. if the word is "tasty"
-   * and we guessed "stint", we would know that there are *two* Ts that have
-   * to be in the answer.
+  /**
+   * Letters which we know have to be in the answer at least a certain number
+   * of times, but we don't know exactly how many or in which positions.
    */
-  requiredLetters?: string[];
+  minimumLetterCounts?: Record<string, number>;
   
   /**
    * Stores any letters for which we know exactly how many of that letter is
@@ -59,7 +59,7 @@ export const getEmptyRateWordCriteria = (easyMode:boolean=false):Required<RateWo
   invalidLetters: new Set(),
   invalidLettersByPosition: [new Set(), new Set(), new Set(), new Set(), new Set()],
   correctLetters: [null, null, null, null, null],
-  requiredLetters: [],
+  minimumLetterCounts: {},
   knownLetterCounts: {},
   easyMode,
 });
@@ -131,13 +131,17 @@ export const rateWord = (word:string, stats:WordListStats, criteria:RateWordCrit
   
   let score = 0;
   
-  const requiredLetters = criteria.requiredLetters ? [...criteria.requiredLetters] : [];
+  const minimumLetterCounts = criteria.minimumLetterCounts ? { ...criteria.minimumLetterCounts } : {};
   
   const lettersProcessed = new Set<string>();
   for(let i = 0; i < 5; i++) {
     const letter = word[i];
     
-    const wasRequiredLetter = arrayRemoveValue(requiredLetters, letter);
+    const wasRequiredLetter = !!minimumLetterCounts[letter];
+    
+    if(wasRequiredLetter) {
+      minimumLetterCounts[letter]--;
+    }
     
     // award points based on how likely this letter is to be the right answer at this position.
     // But if this wasn't a required letter, multiply the position-specific points by 1/1000,
@@ -162,7 +166,7 @@ export const rateWord = (word:string, stats:WordListStats, criteria:RateWordCrit
  * Returns whether the given word matches the provided criteria.
  */
 export const wordMatchesCriteria = (word:string, criteria:RateWordCriteria={}):boolean => {
-  const requiredLetters = criteria.requiredLetters ? [...criteria.requiredLetters] : [];
+  const minimumLetterCounts = criteria.minimumLetterCounts ? { ...criteria.minimumLetterCounts } : {};
   
   for(let i = 0; i < 5; i++) {
     const letter = word[i];
@@ -176,11 +180,14 @@ export const wordMatchesCriteria = (word:string, criteria:RateWordCriteria={}):b
     if(criteria?.correctLetters?.[i] && criteria.correctLetters[i] !== letter)
       return false;
     
-    arrayRemoveValue(requiredLetters, letter);
+    if(minimumLetterCounts[letter] > 1)
+      minimumLetterCounts[letter]--;
+    else if (minimumLetterCounts[letter])
+      delete minimumLetterCounts[letter];
   }
   
   // if we didn't have all required letters, this can't be a match.
-  if(requiredLetters.length)
+  if(Object.keys(minimumLetterCounts).length)
     return false;
   
   // check for character counts if any are known
@@ -193,6 +200,54 @@ export const wordMatchesCriteria = (word:string, criteria:RateWordCriteria={}):b
   }
   
   return true;
+}
+
+export const applyCriteriaToWordList = (criteria:RateWordCriteria, wordList:string[], wordListIndex:WordListIndex):string[] => {
+  // masks where a `1` means to include the word
+  const includeMasks:BigBitMask[] = [];
+    
+  // masks where a `1` means to exclude the word
+  const excludeMasks:BigBitMask[] = [];
+  
+  criteria.invalidLetters?.forEach(letter => includeMasks.push(wordListIndex.getMaskForWordsWithExactLetterCount(0, letter)));
+  
+  criteria.invalidLettersByPosition?.forEach((letters, position) => {
+    letters?.forEach(letter => excludeMasks.push(wordListIndex.getMaskForWordsWithLetterInPosition(position, letter)));
+  });
+  
+  criteria.correctLetters?.forEach((letter, position) => {
+    if (letter)
+      includeMasks.push(wordListIndex.getMaskForWordsWithLetterInPosition(position, letter));
+  })
+  
+  if(criteria.minimumLetterCounts) {
+    Object.entries(criteria.minimumLetterCounts).forEach(([letter, count]) => {
+      includeMasks.push(wordListIndex.getMaskForWordsWithMinimumLetterCount(count, letter));
+    })
+  }
+  
+  if (criteria.knownLetterCounts) {
+    Object.entries(criteria.knownLetterCounts).forEach(([letter, count]) => {
+      includeMasks.push(wordListIndex.getMaskForWordsWithExactLetterCount(count, letter));
+    });
+  }
+  
+  if(excludeMasks.length && !includeMasks.length)
+    includeMasks.push(new BigBitMask(wordList.length, true));
+  
+  if(includeMasks.length) {
+    const includeMask = includeMasks.length > 1 ? BigBitMask.intersect(...includeMasks) : includeMasks[0];
+    
+    let finalMask = includeMask;
+    if(excludeMasks.length) {
+      const excludeMask = excludeMasks.length > 1 ? BigBitMask.union(...excludeMasks) : excludeMasks[0];
+      finalMask = includeMask.subtract(excludeMask);
+    }
+    
+    wordList = finalMask.apply(wordList);
+  }
+  
+  return wordList;
 }
 
 /**
@@ -240,7 +295,11 @@ export const rateWordV2 = (word:string, wordList:string[]=DEFAULT_WORD_LIST, cri
 /**
  * Gets a sorted word list, evaluating the score for each word.
  */
-export const getSortedWordList = (stats:WordListStats, criteria:RateWordCriteria={}, wordList:string[]=DEFAULT_WORD_LIST):SortedWordList => {
+export const getSortedWordList = (stats:WordListStats, criteria:RateWordCriteria={}, wordList:string[]=DEFAULT_WORD_LIST, wordListIndex?:WordListIndex):SortedWordList => {
+  if (wordListIndex) {
+    wordList = applyCriteriaToWordList(criteria, wordList, wordListIndex);
+  }
+  
   const list:SortedWordList = wordList.map(word => ({
     word,
     score: rateWord(word, stats, criteria),

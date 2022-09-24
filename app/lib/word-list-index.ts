@@ -29,19 +29,16 @@ export default class WordListIndex {
     
     wordList.forEach((word, wordIndex) => {
       const letterCounts: Record<string, number> = {};
+      letters.forEach(letter => letterCounts[letter] = 0);
+      
       for(let position = 0; position < 5; position++) {
         const letter = word[position];
         this.hasLetterInPosition[position][letter].setBit(wordIndex);
         
-        if(letterCounts[letter]) {
           letterCounts[letter]++;
         }
-        else {
-          letterCounts[letter] = 1;
-        }
-      }
       
-      Object.keys(letterCounts).forEach(letter => {
+      letters.forEach(letter => {
         const count = letterCounts[letter];
         this.exactCountsForLetter[count][letter].setBit(wordIndex);
         

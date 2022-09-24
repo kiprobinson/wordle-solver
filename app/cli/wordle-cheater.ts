@@ -1,5 +1,6 @@
 import CliUtils from "../lib/cli-utils";
-import { getWordListStats, getSortedWordList, RateWordCriteria, WordListStats, getEmptyRateWordCriteria, DEFAULT_WORD_LIST } from "../lib/word-list";
+import { getWordListStats, getSortedWordList, RateWordCriteria, getEmptyRateWordCriteria, DEFAULT_WORD_LIST } from "../lib/word-list";
+import WordListIndex from "../lib/word-list-index";
 import { formatGuessPerResult, getResultForGuess, updateCriteriaPerResult } from "../lib/wordle-engine";
 
 const NUM_WORDS_TO_SHOW = 40;
@@ -11,13 +12,14 @@ type GuessHistory = Array<{guess:string, result:string}>;
  */
 const cheatAtWordle = async ():Promise<void> => {
   let wordList = DEFAULT_WORD_LIST;
+  const wordListIndex = new WordListIndex(wordList);
   const criteria: Required<RateWordCriteria> = getEmptyRateWordCriteria();
   
   const correctAnswer = await askForAnswer();
   
   let guesses:GuessHistory = [];
   while(true) {
-    const {abort, newWordList} = showBestGuesses(wordList, criteria);
+    const {abort, newWordList} = showBestGuesses(wordList, wordListIndex, criteria);
     if(abort)
       break;
     
@@ -54,18 +56,18 @@ const askForAnswer = async ():Promise<string|null> => {
 /**
  * Show the best guesses at this point in the game.
  */
-const showBestGuesses = (wordList:string[], criteria:RateWordCriteria): {abort:boolean, newWordList: string[]} => {
+const showBestGuesses = (wordList:string[], wordListIndex:WordListIndex, criteria:RateWordCriteria): {abort:boolean, newWordList: string[]} => {
   const stats = getWordListStats(wordList);
-  const sortedWordList = getSortedWordList(stats, criteria);
-  const newWordList = sortedWordList.filter(e => e.score > 0).map(e => e.word);
+  const sortedWordList = getSortedWordList(stats, criteria, undefined, wordListIndex);
+  const newWordList = sortedWordList.map(e => e.word);
   
-  if(sortedWordList[0].score <= 0) {
+  if(newWordList.length <= 0) {
     console.log();
     console.log("I'm sorry, but I couldn't find any words matching this criteria. Wordle must have a larger vocabulary than me!");
     return {abort: true, newWordList};
   }
   
-  const numPossibleWords = sortedWordList.reduce((count, entry) => count + (entry.score > 0 ? 1 : 0), 0);
+  const numPossibleWords = sortedWordList.length;
   
   console.log();
   console.log(`I found ${numPossibleWords} possible words. Here are my top ${Math.min(numPossibleWords, NUM_WORDS_TO_SHOW)} suggestions for you to try:`);

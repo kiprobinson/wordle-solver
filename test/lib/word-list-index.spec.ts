@@ -65,7 +65,7 @@ const wordList:string[] = [
 
 
 
-describe.only('test word-list-index.ts methods', () => {
+describe('test word-list-index.ts methods', () => {
   const wordListIndex = new WordListIndex(wordList);
   
   it('getMaskForWordsWithLetterInPosition', () => {
@@ -91,6 +91,9 @@ describe.only('test word-list-index.ts methods', () => {
   });
   
   it('getMaskForWordsWithExactLetterCount', () => {
+    expect(wordListIndex.getMaskForWordsWithExactLetterCount(0, 'a').apply(wordList)).to.deep.equal([
+      'bluff', 'boxer', 'buggy', 'chief', 'cling', 'clown', 'colby', 'fungi', 'gruel', 'gully', 'hunky', 'inter', 'irony', 'merit', 'needy', 'onset', 'poker', 'prize', 'rhyme', 'ruder', 'shrug', 'stomp', 'twice', 'unfit', 'upset', 'whoop', 'woven', 'youth', 'yummy',
+    ]);
     expect(wordListIndex.getMaskForWordsWithExactLetterCount(1, 'a').apply(wordList)).to.deep.equal([
       'alien', 'charm', 'cramp', 'gauze', 'glean', 'khaki', 'label', 'patty', 'quart', 'smear', 'treat', 'twang', 'waste'
     ]);
@@ -107,6 +110,9 @@ describe.only('test word-list-index.ts methods', () => {
       'aaaaa'
     ]);
     
+    expect(wordListIndex.getMaskForWordsWithExactLetterCount(0, 'b').apply(wordList)).to.deep.equal([
+      'alien', 'charm', 'chief', 'cling', 'clown', 'cramp', 'fungi', 'gauze', 'glean', 'gruel', 'gully', 'hunky', 'inter', 'irony', 'khaki', 'merit', 'needy', 'onset', 'patty', 'poker', 'prize', 'quart', 'rhyme', 'ruder', 'shrug', 'smear', 'stomp', 'treat', 'twang', 'twice', 'unfit', 'upset', 'waste', 'whoop', 'woven', 'youth', 'yummy', 'aaaaa',
+    ]);
     expect(wordListIndex.getMaskForWordsWithExactLetterCount(1, 'b').apply(wordList)).to.deep.equal([
       'bluff', 'boxer', 'buggy', 'colby', 'label', 'aaaab', 'baaaa', 'aabaa'
     ]);
@@ -119,6 +125,9 @@ describe.only('test word-list-index.ts methods', () => {
     expect(wordListIndex.getMaskForWordsWithExactLetterCount(4, 'b').apply(wordList)).to.deep.equal([]);
     expect(wordListIndex.getMaskForWordsWithExactLetterCount(5, 'b').apply(wordList)).to.deep.equal([]);
     
+    expect(wordListIndex.getMaskForWordsWithExactLetterCount(0, 'z').apply(wordList)).to.deep.equal([
+      'alien', 'bluff', 'boxer', 'buggy', 'charm', 'chief', 'cling', 'clown', 'colby', 'cramp', 'fungi', 'glean', 'gruel', 'gully', 'hunky', 'inter', 'irony', 'khaki', 'label', 'merit', 'needy', 'onset', 'patty', 'poker', 'quart', 'rhyme', 'ruder', 'shrug', 'smear', 'stomp', 'treat', 'twang', 'twice', 'unfit', 'upset', 'waste', 'whoop', 'woven', 'youth', 'yummy', 'aaaaa', 'aaaab', 'baaaa', 'aabaa', 'aaabb', 'bbaaa', 'baaab', 'ababa', 'aabbb', 'abbba', 'bbbaa', 'babab',
+    ]);
     expect(wordListIndex.getMaskForWordsWithExactLetterCount(1, 'z').apply(wordList)).to.deep.equal([
       'gauze', 'prize'
     ]);
@@ -127,6 +136,9 @@ describe.only('test word-list-index.ts methods', () => {
     expect(wordListIndex.getMaskForWordsWithExactLetterCount(4, 'z').apply(wordList)).to.deep.equal([]);
     expect(wordListIndex.getMaskForWordsWithExactLetterCount(5, 'z').apply(wordList)).to.deep.equal([]);
     
+    expect(wordListIndex.getMaskForWordsWithExactLetterCount(0, 'e').apply(wordList)).to.deep.equal([
+      'bluff', 'buggy', 'charm', 'cling', 'clown', 'colby', 'cramp', 'fungi', 'gully', 'hunky', 'irony', 'khaki', 'patty', 'quart', 'shrug', 'stomp', 'twang', 'unfit', 'whoop', 'youth', 'yummy', 'aaaaa', 'aaaab', 'baaaa', 'aabaa', 'aaabb', 'bbaaa', 'baaab', 'ababa', 'aabbb', 'abbba', 'bbbaa', 'babab',
+    ]);
     expect(wordListIndex.getMaskForWordsWithExactLetterCount(1, 'e').apply(wordList)).to.deep.equal([
       'alien', 'boxer', 'chief', 'gauze', 'glean', 'gruel', 'inter', 'label', 'merit', 'onset', 'poker', 'prize', 'rhyme', 'ruder', 'smear', 'treat', 'twice', 'upset', 'waste', 'woven'
     ]);
@@ -137,6 +149,9 @@ describe.only('test word-list-index.ts methods', () => {
     expect(wordListIndex.getMaskForWordsWithExactLetterCount(4, 'e').apply(wordList)).to.deep.equal([]);
     expect(wordListIndex.getMaskForWordsWithExactLetterCount(5, 'e').apply(wordList)).to.deep.equal([]);
     
+    expect(wordListIndex.getMaskForWordsWithExactLetterCount(0, 't').apply(wordList)).to.deep.equal([
+      'alien', 'bluff', 'boxer', 'buggy', 'charm', 'chief', 'cling', 'clown', 'colby', 'cramp', 'fungi', 'gauze', 'glean', 'gruel', 'gully', 'hunky', 'irony', 'khaki', 'label', 'needy', 'poker', 'prize', 'rhyme', 'ruder', 'shrug', 'smear', 'whoop', 'woven', 'yummy', 'aaaaa', 'aaaab', 'baaaa', 'aabaa', 'aaabb', 'bbaaa', 'baaab', 'ababa', 'aabbb', 'abbba', 'bbbaa', 'babab',
+    ]);
     expect(wordListIndex.getMaskForWordsWithExactLetterCount(1, 't').apply(wordList)).to.deep.equal([
       'inter', 'merit', 'onset', 'quart', 'stomp', 'twang', 'twice', 'unfit', 'upset', 'waste', 'youth'
     ]);

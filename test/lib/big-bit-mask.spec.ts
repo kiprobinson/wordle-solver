@@ -60,6 +60,17 @@ describe('test big-bit-mask.ts methods', () => {
     expect(new BigBitMask(65).toString()).to.equal('00000000000000000000000000000000000000000000000000000000000000000');
   });
   
+  it('constructor - length (filled)', () => {
+    expect(new BigBitMask(1, true).toString()).to.equal('1');
+    expect(new BigBitMask(10, true).toString()).to.equal('1111111111');
+    expect(new BigBitMask(31, true).toString()).to.equal('1111111111111111111111111111111');
+    expect(new BigBitMask(32, true).toString()).to.equal('11111111111111111111111111111111');
+    expect(new BigBitMask(33, true).toString()).to.equal('111111111111111111111111111111111');
+    expect(new BigBitMask(63, true).toString()).to.equal('111111111111111111111111111111111111111111111111111111111111111');
+    expect(new BigBitMask(64, true).toString()).to.equal('1111111111111111111111111111111111111111111111111111111111111111');
+    expect(new BigBitMask(65, true).toString()).to.equal('11111111111111111111111111111111111111111111111111111111111111111');
+  });
+  
   it('constructor - clone', () => {
     const mask1 = new BigBitMask(65);
     const mask2 = new BigBitMask(mask1);
@@ -124,6 +135,13 @@ describe('test big-bit-mask.ts methods', () => {
     mask.setBit(0, false);
     expect(mask.isBitSet(0)).to.be.false;
     expect(mask.toString()).to.equal('00000000000000000000000000000000110000000000000000000000000000110');
+  });
+  
+  it('negate', () => {
+    expect(new BigBitMask('000101101100101101100111101000010111100000111011001110111010110000001011').negate().toString()).to.equal('111010010011010010011000010111101000011111000100110001000101001111110100');
+    expect(new BigBitMask('100001011111010001010000000111001111000011111110101001110101101001000000').negate().toString()).to.equal('011110100000101110101111111000110000111100000001010110001010010110111111');
+    expect(new BigBitMask('011110000000101000001100001010101011100111011110111110011110111010111011').negate().toString()).to.equal('100001111111010111110011110101010100011000100001000001100001000101000100');
+    expect(new BigBitMask('110100010110100101000100001111010011100110100111011111110111011101011001').negate().toString()).to.equal('001011101001011010111011110000101100011001011000100000001000100010100110');
   });
   
   it('union', () => {
@@ -246,6 +264,26 @@ describe('test big-bit-mask.ts methods', () => {
     expect(new BigBitMask('010100010111000000010000111110011000011101100111011100000100101011000011').getBitCount()).to.equal(32);
     expect(new BigBitMask('000100111001100111111110001111011111111010111110000111010101001010111000').getBitCount()).to.equal(43);
     expect(new BigBitMask('111001111001101001110111110100010001010011101100000010100001101101011000').getBitCount()).to.equal(36);
+  });
+  
+  it('getBitCount - filled constructor', () => {
+    // point of these tests is to ensure that we don't have extra bits set in the last byte
+    expect(new BigBitMask(1, true).getBitCount()).to.equal(1);
+    expect(new BigBitMask(10, true).getBitCount()).to.equal(10);
+    expect(new BigBitMask(31, true).getBitCount()).to.equal(31);
+    expect(new BigBitMask(32, true).getBitCount()).to.equal(32);
+    expect(new BigBitMask(33, true).getBitCount()).to.equal(33);
+    expect(new BigBitMask(63, true).getBitCount()).to.equal(63);
+    expect(new BigBitMask(64, true).getBitCount()).to.equal(64);
+    expect(new BigBitMask(65, true).getBitCount()).to.equal(65);
+  });
+  
+  it('getBitCount - negate', () => {
+    // point of these tests is to ensure that we don't have extra bits set in the last byte
+    expect(new BigBitMask('100111100000001001110011101101111011011011101000111101110011000011111010').negate().getBitCount()).to.equal(31);
+    expect(new BigBitMask('100010001100000010110100101101001000000111000010000000100110011001110011').negate().getBitCount()).to.equal(45);
+    expect(new BigBitMask('010001011100101111100100111110100110101100001011011010010110010010000000').negate().getBitCount()).to.equal(38);
+    expect(new BigBitMask('000111011100001100111100000011100001100100110110101010100000011110101101').negate().getBitCount()).to.equal(38);
   });
   
   it('apply', () => {

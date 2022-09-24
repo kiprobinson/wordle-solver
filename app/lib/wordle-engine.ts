@@ -63,14 +63,9 @@ export const formatGuessPerResult = (guess: string, result: string):string => {
  * @param criteria Current criteria. This object will be updated based on the response.
  */
 export const updateCriteriaPerResult = (guess: string, result: string, criteria:Required<RateWordCriteria>):void => {
-  // required letters are kind of tricky. say the correct answer is "truss", and we guessed "shore".
-  // => requiredLetters has an S.
-  // Now, say we guess "shops". We need to know now that required letters has two Ss.
-  // Now, say we guess "sassy". We need to make sure that we don't end up with three Ss in required letters
-  const requiredLettersCopy = [...criteria.requiredLetters];
-  
   const blackLetters:string[] = [];
   const nonBlackLetters:string[] = [];
+  const nonBlackLetterCounts:Record<string, number> = {};
   
   for(let i = 0; i < 5; i++) {
     const guessLetter = guess[i];
@@ -94,15 +89,11 @@ export const updateCriteriaPerResult = (guess: string, result: string, criteria:
     
     if(resultColor === 'g' || resultColor === 'y') {
       nonBlackLetters.push(guessLetter);
-      if(requiredLettersCopy.includes(guessLetter)) {
-        // this letter was already in criteria.required letters. Remove it from the copy, so that if
-        // there is another yellow/green of this letter, it doesn't get skipped.
-        arrayRemoveValue(requiredLettersCopy, guessLetter);
-      }
-      else {
-        // this yellow/green letter wasn't already in required letters, so add it.
-        criteria.requiredLetters.push(guessLetter);
-      }
+      
+      if(nonBlackLetterCounts[guessLetter])
+        nonBlackLetterCounts[guessLetter]++;
+      else
+        nonBlackLetterCounts[guessLetter] = 1;
     }
     else {
       blackLetters.push(guessLetter);
@@ -110,15 +101,10 @@ export const updateCriteriaPerResult = (guess: string, result: string, criteria:
   }
   
   // in the case where we guessed a word that has two instances of a letter, but only one is correct,
-  // we will have the letter in invalidLetters but also in correctLetters or requiredLetters, which
-  // results in an impossible solution. So we have to remove that letter from invalidLetters
-  for(const letter of criteria.correctLetters) {
-    if(letter)
-      criteria.invalidLetters.delete(letter);
-  }
-  for(const letter of criteria.requiredLetters) {
-    if(letter)
-      criteria.invalidLetters.delete(letter);
+  // we will have the letter in invalidLetters but also in nonBlackLetters, which results in an
+  // impossible solution. So we have to remove that letter from invalidLetters
+  for(const letter of nonBlackLetters) {
+    criteria.invalidLetters.delete(letter);
   }
   
   // If word is "myths" and we guess "truss" (ybbbg) or "tessa" (ybybb),
@@ -130,5 +116,14 @@ export const updateCriteriaPerResult = (guess: string, result: string, criteria:
   const multicolorLetters:string[] = arrayIntersection(blackLetters, nonBlackLetters);
   for(const letter of multicolorLetters) {
     criteria.knownLetterCounts[letter] = arrayCount(nonBlackLetters, letter);
+    
+    //if we have known letter counts, there's no reason to have minimum letter counts
+    delete criteria.minimumLetterCounts[letter];
+    delete nonBlackLetterCounts[letter];
   }
+  
+  Object.entries(nonBlackLetterCounts).forEach(([letter, count]) => {
+    if(!criteria.minimumLetterCounts[letter] || criteria.minimumLetterCounts[letter] < count)
+      criteria.minimumLetterCounts[letter] = count;
+  });
 }
