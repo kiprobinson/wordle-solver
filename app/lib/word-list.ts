@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import BigBitMask from './big-bit-mask';
 import { FrequencyTable } from './frequency-table';
-import { arrayCount, arrayRemoveValue } from './util';
+import { arrayCount } from './util';
 import WordListIndex from './word-list-index';
 import { getResultForGuess, updateCriteriaPerResult } from './wordle-engine';
 
@@ -73,8 +73,8 @@ export const sanitizeCriteria = (criteria:RateWordCriteria):Required<RateWordCri
     result.invalidLettersByPosition = criteria.invalidLettersByPosition.map(o => new Set([...o]));
   if(Array.isArray(criteria.correctLetters) && criteria.correctLetters.length === 5 && criteria.correctLetters.every(s => s === null || 'string' === typeof s))
     result.correctLetters = [...criteria.correctLetters];
-  if(Array.isArray(criteria.requiredLetters))
-    result.requiredLetters = [...criteria.requiredLetters];
+  if(criteria.minimumLetterCounts)
+    result.minimumLetterCounts = {...criteria.minimumLetterCounts};
   if(criteria.knownLetterCounts)
     result.knownLetterCounts = {...criteria.knownLetterCounts};
   if('boolean' === typeof criteria.easyMode)
